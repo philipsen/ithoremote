@@ -19,6 +19,7 @@ open Serilog.Sinks
 open ithoback.HttpHandlers
 open HttpHouse
 open HousesMongoDB
+open MqttConnection
 
 // ---------------------------------
 // Web app
@@ -100,7 +101,7 @@ type Startup() =
         services.AddHouseMongoDB(Db.houses) |> ignore
         // services.AddEventMongoDB(Db.events) |> ignore
         // services.AddStateGet(Db.events) |> ignore
-        // services.AddMqtt() |> ignore
+        services.AddMqtt() |> ignore
 
     member __.Configure (app : IApplicationBuilder)
                         (env : IHostingEnvironment)
