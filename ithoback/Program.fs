@@ -20,6 +20,8 @@ open ithoback.HttpHandlers
 open HttpHouse
 open HousesMongoDB
 open MqttConnection
+open Signalr
+open Microsoft.AspNetCore.Http
 
 // ---------------------------------
 // Web app
@@ -98,6 +100,7 @@ type Startup() =
     member __.ConfigureServices (services : IServiceCollection) =
         services.AddCors()    |> ignore
         services.AddGiraffe() |> ignore
+        services.AddSignalR() |> ignore
         services.AddHouseMongoDB(Db.houses) |> ignore
         // services.AddEventMongoDB(Db.events) |> ignore
         // services.AddStateGet(Db.events) |> ignore
@@ -109,6 +112,7 @@ type Startup() =
         app
             .UseHttpsRedirection()
             .UseCors(configureCors)
+            .UseSignalR(fun routes -> routes.MapHub<IthoHub>(PathString("/ithoHub")) |> ignore)
             //.UseWebSockets()
             //.UseMiddleware<WebSocketMiddleware>()
             .UseGiraffe appWithLogger
