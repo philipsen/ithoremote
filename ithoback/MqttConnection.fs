@@ -13,7 +13,6 @@ module log =
         log.Information
     Information "Load MqttConnection"
 
-
 module remoteDefinitions = 
     let remotes = [ ("wmt6/main", "52:50:b9") ;
                     ("wmt6/second", "74:f3:af") ;
@@ -22,7 +21,6 @@ module remoteDefinitions =
                     ("wmt28/main", "52:4d:45") ;
                     ("wmt28/second", "74:f3:af") ] |> Map.ofList
     
-
     let remoteCommands = [
                     ("eco", "22:f8:3:0:1:2");
                     ("comfort", "22:f8:3:0:2:2");
