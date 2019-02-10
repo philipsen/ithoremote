@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { House } from '../house';
+import { HousesService } from '../services/houses.service';
 
 @Component({
   selector: 'app-houses-list',
@@ -10,7 +11,7 @@ export class HousesListComponent implements OnInit {
 
   houses: House[];
 
-  constructor(rivate houseService: HousesService) { }
+  constructor(private houseService: HousesService) { }
 
   ngOnInit() {
     this.getHouses();
