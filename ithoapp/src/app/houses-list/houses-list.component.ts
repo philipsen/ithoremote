@@ -21,4 +21,5 @@ export class HousesListComponent implements OnInit {
     this.houseService.getHouses()
       .subscribe(houses => this.houses = houses);
   }
+
 }
