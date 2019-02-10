@@ -6,6 +6,8 @@ import { House } from '../models/house';
 import { Wmt40Buttons, Wmt6Buttons } from './houses.hardcodedbuttons';
 import { IthoButton } from '../models/itho-button';
 
+import * as signalR from '@aspnet/signalr';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -13,8 +15,22 @@ import { IthoButton } from '../models/itho-button';
 export class HousesService {
 
   private url = 'https://localhost:5001/api/';
+  private hubConnection: signalR.HubConnection;
 
-  constructor( private http: HttpClient) { }
+  constructor( private http: HttpClient) {
+    this.startConnection();
+  }
+
+  public startConnection = () => {
+    console.log('startConnection');
+    this.hubConnection = new signalR.HubConnectionBuilder()
+                            .withUrl('https://localhost:5001/ithoHub')
+                            .build();
+    this.hubConnection
+      .start()
+      .then(() => console.log('Connection started'))
+      .catch(err => console.log('Error while starting connection: ' + err));
+  }
 
   getHouses(): Observable<House[]> {
     return this.http.get<House[]>(this.url + 'houses');
