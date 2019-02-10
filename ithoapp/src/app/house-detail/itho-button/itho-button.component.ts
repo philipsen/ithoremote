@@ -20,7 +20,6 @@ export class IthoButtonComponent implements OnInit {
   ngOnInit() {
   }
 
-
   // sendCommandBytes(remoteId: string, remoteCommand: string): void {
   //   this.remoteCommandService.sendCommandBytes(this.house, remoteId, remoteCommand).subscribe(() => {
   //   });
