@@ -12,7 +12,7 @@ import { IthoButton } from '../models/itho-button';
 
 export class HousesService {
 
-  private url = 'http://localhost:5000/api/';
+  private url = 'https://localhost:5001/api/';
 
   constructor( private http: HttpClient) { }
 
