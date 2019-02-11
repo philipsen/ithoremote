@@ -31,18 +31,25 @@ let webApp =
     choose [
         subRoute "/api"
             (choose [
-                GET >=> choose [
-                    route "/hello" >=> handleGetHello
-                ]
                 HttpHouse.handlers
             ])
-        setStatusCode 404 >=> text "Not Found" ]
+        setStatusCode 404 >=> text "Not Found2" ]
 
 
 let config = 
   { SerilogConfig.defaults with 
-      ErrorHandler = fun ex context -> setStatusCode 500 >=> text "Something went horribly, horribly wrong" }
+      ErrorHandler = fun ex context -> 
+        printf "error {%A}" ex
+        setStatusCode 500 >=> text "internal error" }
 let appWithLogger = SerilogAdapter.Enable(webApp, config)
+
+Log.Logger <- 
+  LoggerConfiguration()
+    .Destructure.FSharpTypes()
+    .WriteTo.Console()
+    //.WriteTo.Console(new JsonFormatter())
+    .CreateLogger()
+
 
 // ---------------------------------
 // Error handler
@@ -86,6 +93,13 @@ let configureAppConfiguration  (context: WebHostBuilderContext) (config: IConfig
         .AddJsonFile("appsettings.json", false, true)
         .AddEnvironmentVariables() |> ignore
 
+// let agentFactory(serviceProvider : IServiceProvider) =
+//     let thing = serviceProvider.GetService<string>()
+    // MailboxProcessor.Start(fun (inbox : MailboxProcessor<Message>) ->
+    //     // /* loop implementation */
+    //     // 0
+    //     // printf "nope {%A}"
+    // )
 
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection) =
@@ -95,6 +109,7 @@ type Startup() =
         services.AddHouseMongoDB(Db.houses) |> ignore
         // services.AddEventMongoDB(Db.events) |> ignore
         // services.AddStateGet(Db.events) |> ignore
+        // services.AddSingleton<MailboxProcessor<Message>>(agentFactory) |> ignore
         services.AddMqtt() |> ignore
 
     member __.Configure (app : IApplicationBuilder)
@@ -123,3 +138,7 @@ let main _ =
     0
 
 
+
+// module Bla = 
+//     let manager = Startup.__serviceProvider.GetRequiredService<IConnectionManager>();
+//     let hub = manager.GetHubContext<ChatHub>();

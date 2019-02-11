@@ -51,6 +51,11 @@ module Connection =
         let command = remoteDefinitions.command remoteCommandId
         sprintf "received %s %s %s %s"  house sender remote command |> Information
 
+        //let clients = GlobalHost.ConnectionManager.GetHubContext<MyFirstHub>().Clients
+
+        //0
+
+
     let Startup = 
         Information "Connection, starting"
         let node = MqttClient(brokerHostName="167.99.32.103")

@@ -7,7 +7,10 @@ open Giraffe.SerilogExtensions
 
 open House
 open HouseStatusFactory
+open Signalr
 
+open Microsoft.AspNetCore.SignalR
+open Microsoft.AspNetCore.SignalR
 module HttpHouse =
     let handlers : HttpFunc -> HttpContext -> HttpFuncResult =
         choose [
@@ -17,6 +20,15 @@ module HttpHouse =
                         let save = context.GetService<HouseSave>()
                         let! house = context.BindJsonAsync<House>()
                         return! json (save house) next context
+                    }
+            POST >=> route "/msg" >=>
+                fun next context ->
+                    task {
+                        let hub = context.GetService<IHubContext<IthoHub>>()
+                        let! a = context.ReadBodyFromRequestAsync()
+
+                        hub.Clients.All.SendAsync("aap", a) |> Async.AwaitTask |> ignore
+                        return! json (a) next context 
                     }
             GET >=> route "/houses" >=>
                 fun next context ->

@@ -30,6 +30,11 @@ export class HousesService {
       .start()
       .then(() => console.log('Connection started'))
       .catch(err => console.log('Error while starting connection: ' + err));
+
+    this.hubConnection.on('aap', (data) => {
+      // this.data = data;
+      console.log(data);
+    });
   }
 
   getHouses(): Observable<House[]> {
