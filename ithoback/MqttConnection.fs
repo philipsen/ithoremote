@@ -4,13 +4,18 @@ open Microsoft.Extensions.DependencyInjection
 open uPLibrary.Networking.M2Mqtt
 open uPLibrary.Networking.M2Mqtt.Messages;
 open System.Text
-open Serilog
+//open Serilog
 open HouseStatusFactory
+open Microsoft.Extensions.Logging
+
+type Bla(logger: ILogger<Bla>) =
+    let _logger = logger
 
 module log = 
-    let log = LoggerConfiguration().WriteTo.Console().CreateLogger()
+    let log = Serilog.Log.Logger //LoggerConfiguration().WriteTo.Console().CreateLogger()
     let Information =
         log.Information
+        
     Information "Load MqttConnection"
 
 module remoteDefinitions = 

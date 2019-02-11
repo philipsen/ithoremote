@@ -20,6 +20,7 @@
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Giraffe" Version="3.4.*" />
     <PackageReference Include="Giraffe.SerilogExtensions" Version="1.1.0" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="2.0.2" />
     <PackageReference Include="TaskBuilder.fs" Version="2.1.*" />
     <PackageReference Include="Serilog" Version="2.8.0" />
     <PackageReference Include="Serilog.Sinks.Literate" Version="3.0.0" />
@@ -36,7 +37,6 @@
     <Compile Include="HouseStatusFactory.fs" />
     <Compile Include="Signalr.fs" />
     <Compile Include="HttpHouse.fs" />
-    <Compile Include="HttpHandlers.fs" />
     <Compile Include="Db.fs" />
     <Compile Include="HousesMongoDb.fs" />
     <Compile Include="MqttConnection.fs" />

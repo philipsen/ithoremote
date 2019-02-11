@@ -10,7 +10,6 @@ open HouseStatusFactory
 open Signalr
 
 open Microsoft.AspNetCore.SignalR
-open Microsoft.AspNetCore.SignalR
 module HttpHouse =
     let handlers : HttpFunc -> HttpContext -> HttpFuncResult =
         choose [
@@ -24,9 +23,10 @@ module HttpHouse =
             POST >=> route "/msg" >=>
                 fun next context ->
                     task {
+                        let logger = context.Logger()
+                        logger.Information "send message to hub"
                         let hub = context.GetService<IHubContext<IthoHub>>()
                         let! a = context.ReadBodyFromRequestAsync()
-
                         hub.Clients.All.SendAsync("aap", a) |> Async.AwaitTask |> ignore
                         return! json (a) next context 
                     }
