@@ -12,20 +12,11 @@ open Giraffe
 
 open Giraffe.SerilogExtensions
 open Serilog
-open Serilog.Configuration
-open Serilog.Formatting.Json
-open Serilog.Sinks
 
 open HttpHouse
 open HousesMongoDB
-open MqttConnection
 open Signalr
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.SignalR
-
-// ---------------------------------
-// Web app
-// ---------------------------------
 
 let webApp =
     choose [
@@ -35,7 +26,6 @@ let webApp =
             ])
         setStatusCode 404 >=> text "Not Found2" ]
 
-
 Log.Logger <- 
   LoggerConfiguration()
     .MinimumLevel.Debug()
@@ -44,8 +34,6 @@ Log.Logger <-
     //.WriteTo.Console(JsonFormatter())
     .CreateLogger()
 
-Log.Information "this is a message"
-
 let config = 
   { SerilogConfig.defaults with 
       ErrorHandler = fun ex context -> 
@@ -53,15 +41,9 @@ let config =
         setStatusCode 500 >=> text ex.Message }
 let appWithLogger = SerilogAdapter.Enable(webApp, config)
 
-
-// ---------------------------------
-// Error handler
-// ---------------------------------
-
 let errorHandler (ex : Exception) (logger : ILogger) =
     Log.Error(ex, "An unhandled exception has occurred while executing the request.")
     clearResponse >=> setStatusCode 500 >=> text ex.Message
-
 
 let configureCors (builder : CorsPolicyBuilder) =
     builder
@@ -71,16 +53,12 @@ let configureCors (builder : CorsPolicyBuilder) =
            .AllowCredentials()
            |> ignore
 
-
 let configureServices (services : IServiceCollection) =
     services.AddCors()    |> ignore
-    services.AddGiraffe() |> ignore
-    // services.AddLogging(fun l -> l.AddSerilog(Log.Logger, false)) |> ignore
-    
+    services.AddGiraffe() |> ignore    
 
 let configureLogging (builder : ILoggingBuilder) =
     builder
-        //.AddFilter(fun l -> l.Equals LogLevel.Error)
         .AddConsole()
         .AddDebug() |> ignore
 
@@ -90,18 +68,13 @@ let configureAppConfiguration  (context: WebHostBuilderContext) (config: IConfig
         .AddJsonFile("appsettings.json", false, true)
         .AddEnvironmentVariables() |> ignore
 
-
-       
 type Startup() =
     member __.ConfigureServices (services : IServiceCollection) =
+        Log.Logger.Information "configure services"
         services.AddCors()    |> ignore
         services.AddGiraffe() |> ignore
         services.AddSignalR() |> ignore
-        services.AddHouseMongoDB(Db.houses) |> ignore
-        // services.AddEventMongoDB(Db.events) |> ignore
-        // services.AddStateGet(Db.events) |> ignore
-        //services.AddSingleton<MailboxProcessor<Message>>(agentFactory) |> ignore
-        services.AddMqtt() |> ignore
+        services.AddHouseMongoDB(Db.houses) |> ignore        
 
     member __.Configure (app : IApplicationBuilder)
                         (env : IHostingEnvironment)
@@ -111,7 +84,9 @@ type Startup() =
             .UseHttpsRedirection()
             .UseCors(configureCors)
             .UseSignalR(fun routes -> routes.MapHub<IthoHub>(PathString("/ithoHub")) |> ignore)
-            .UseGiraffe appWithLogger    
+            .UseGiraffe appWithLogger
+
+        MqttConnection.Connection (app.ApplicationServices) |> ignore
             
 
 [<EntryPoint>]
@@ -119,14 +94,7 @@ let main _ =
     WebHostBuilder()
         .UseKestrel()
         .ConfigureAppConfiguration(configureAppConfiguration)
-        .UseStartup<Startup>()
-        .ConfigureLogging(configureLogging)        
+        .UseStartup<Startup>() 
         .Build()
         .Run()
     0
-
-
-
-// module Bla = 
-//     let manager = Startup.__serviceProvider.GetRequiredService<IConnectionManager>();
-//     let hub = manager.GetHubContext<ChatHub>();

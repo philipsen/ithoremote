@@ -8,12 +8,9 @@ open Microsoft.Extensions.DependencyInjection
 open IthoEvent
 open EventsMongoDB
 open Domain
-open Microsoft.Extensions.Configuration
 
 let log = LoggerConfiguration().WriteTo.Console().CreateLogger()
 log.Information "Load HouseStatusFactory"
-
-
 
 module CmdArgs =    
     type CommandTask = { 
@@ -80,8 +77,6 @@ module Aggregate =
 
             { state with ventilation = nv; ventilationBaseState = nb ; endTimeCommand = newEnd }
                 
-            
-
     let aggregate = {
         Init = State.Init
         Execute = fun s c -> execute s c |> List.singleton
@@ -89,14 +84,7 @@ module Aggregate =
     }
 
 module Mapping =
-    //open MongoDB.Bson
-    // let otDbEvent ev =
-    //     match ev with
-    //     | CommandHappend args -> { kind = ""; house = ""; command = args.CommandName;
-    //         Id=BsonObjectId.Empty; sender=""; time=BsonDateTime System.DateTime.Now; __v=1; remote=""}
-    
     let toDomainEvent (ev: IthoEvent) =
-        //System.Console.WriteLine (ev.time.ToString() + " " + ev.house + " " + ev.kind + " " + ev.remote + " " + ev.sender + " " + ev.command)
         CommandHappend {
             Command = ev.command
             Kind = ev.kind

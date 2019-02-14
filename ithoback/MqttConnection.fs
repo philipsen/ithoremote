@@ -4,18 +4,13 @@ open Microsoft.Extensions.DependencyInjection
 open uPLibrary.Networking.M2Mqtt
 open uPLibrary.Networking.M2Mqtt.Messages;
 open System.Text
-//open Serilog
-open HouseStatusFactory
-open Microsoft.Extensions.Logging
-
-type Bla(logger: ILogger<Bla>) =
-    let _logger = logger
-
+open Signalr
+open Microsoft.AspNetCore.SignalR
+open System
 module log = 
-    let log = Serilog.Log.Logger //LoggerConfiguration().WriteTo.Console().CreateLogger()
+    let log = Serilog.Log.Logger
     let Information =
         log.Information
-        
     Information "Load MqttConnection"
 
 module remoteDefinitions = 
@@ -49,51 +44,34 @@ module remoteDefinitions =
         findValue remoteCommands bytes
 
 
-module Connection =
-    open log
-    let processIncoming house sender remoteId remoteCommandId =
+open log
+
+type Connection (sp: IServiceProvider) =
+    let _hub = sp.GetService<IHubContext<IthoHub>>() 
+
+    let processIncoming house sender remoteId remoteCommandId  =
         let remote = remoteDefinitions.remote remoteId 
         let command = remoteDefinitions.command remoteCommandId
-        sprintf "received %s %s %s %s"  house sender remote command |> Information
 
-        //let clients = GlobalHost.ConnectionManager.GetHubContext<MyFirstHub>().Clients
-
-        //0
+        _hub.Clients.All.SendAsync("state", "{aap}") |> Async.AwaitTask |> ignore
 
 
-    let Startup = 
-        Information "Connection, starting"
-        let node = MqttClient(brokerHostName="167.99.32.103")
+    let node = MqttClient(brokerHostName="167.99.32.103")
 
-        //Received 
-        let msgReceived (e:MqttMsgPublishEventArgs) =
-            //printfn "Sub Received Topic: %s" e.Topic
-            //printfn "Sub Received Qos: %u" e.QosLevel
-            //printfn "Sub Received Retain: %b" e.Retain
-            let m = Encoding.ASCII.GetString e.Message
-            //printfn "Sub Received Message: %s" (m)
-            //sprintf "mqtt received: %s %u %b %s"  e.Topic e.QosLevel e.Retain m |> Information
-            let splitTopic = e.Topic.Split '/'
-            let splitMessage = m.Split '/'
-
-            match (splitTopic, splitMessage) with
-            | [|"itho"; "log"; house|], [|"send"; sender; remoteId; remoteCommand |] -> 
-                processIncoming house sender remoteId remoteCommand
-            | _ -> ()
+    let msgReceived (e:MqttMsgPublishEventArgs) =
+        let m = Encoding.ASCII.GetString e.Message
+        let splitTopic = e.Topic.Split '/'
+        let splitMessage = m.Split '/'
+        match (splitTopic, splitMessage) with
+        | [|"itho"; "log"; house|], [|"send"; sender; remoteId; remoteCommand |] -> 
+            processIncoming house sender remoteId remoteCommand
+        | _ -> ()
             
-
+    do 
+        "Connection ctor" |> Information
         node.MqttMsgPublishReceived.Add(msgReceived)
-
         node.Connect("fsharp_recv", "itho", "aapnootmies") |> ignore
         let topics = [| "#" |]
         let qos = [| MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE |]
         let sr = node.Subscribe(topics, qos)
         Information ("started: " + sr.ToString())
-        node
-
-
-type StartMqtt = MqttClient
-
-type IServiceCollection with
-    member this.AddMqtt() =
-        this.AddSingleton<StartMqtt>(Connection.Startup)

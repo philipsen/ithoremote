@@ -31,7 +31,7 @@ export class HousesService {
       .then(() => console.log('Connection started'))
       .catch(err => console.log('Error while starting connection: ' + err));
 
-    this.hubConnection.on('aap', (data) => {
+    this.hubConnection.on('state', (data) => {
       // this.data = data;
       console.log(data);
     });
