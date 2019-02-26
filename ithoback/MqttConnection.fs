@@ -45,6 +45,15 @@ module remoteDefinitions =
 
 
 open log
+open HouseStatusFactory
+open Db
+open Domain
+
+type StateUpdate = {
+    house: string
+    target: Target
+    state: HouseStatusFactory.State
+}
 
 type Connection (sp: IServiceProvider) =
     let _hub = sp.GetService<IHubContext<IthoHub>>() 
@@ -52,8 +61,13 @@ type Connection (sp: IServiceProvider) =
     let processIncoming house sender remoteId remoteCommandId  =
         let remote = remoteDefinitions.remote remoteId 
         let command = remoteDefinitions.command remoteCommandId
-
-        _hub.Clients.All.SendAsync("state", "{aap}") |> Async.AwaitTask |> ignore
+        let state = getState events house
+        let update = { 
+            house = house
+            target = state.ventilation
+            state = state
+        }
+        _hub.Clients.All.SendAsync("state", state) |> Async.AwaitTask |> ignore
 
 
     let node = MqttClient(brokerHostName="167.99.32.103")

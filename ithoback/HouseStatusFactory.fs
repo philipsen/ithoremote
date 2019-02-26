@@ -25,7 +25,6 @@ type Command =
 type Event =
     | CommandHappend of CmdArgs.CommandTask
 
-
 type State = {  
     ventilation: Target
     ventilationBaseState: VentilationBaseState
@@ -99,8 +98,6 @@ let getState (eventCollection) (house) =
     getEvents eventCollection house
         |> Seq.map Mapping.toDomainEvent 
         |> Seq.fold Aggregate.aggregate.Apply State.Init
-
-
 
 type HouseFindState = string -> State
 

@@ -14,11 +14,14 @@ import * as signalR from '@aspnet/signalr';
 
 export class HousesService {
 
+  public state: string;
+
   private url = 'https://localhost:5001/api/';
   private hubConnection: signalR.HubConnection;
 
   constructor( private http: HttpClient) {
     this.startConnection();
+    this.startSubscription();
   }
 
   public startConnection = () => {
@@ -31,9 +34,14 @@ export class HousesService {
       .then(() => console.log('Connection started'))
       .catch(err => console.log('Error while starting connection: ' + err));
 
+
+  }
+
+  private startSubscription() {
     this.hubConnection.on('state', (data) => {
       // this.data = data;
       console.log(data);
+      this.state = data.ventilation.case;
     });
   }
 
