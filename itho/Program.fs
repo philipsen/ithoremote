@@ -38,12 +38,16 @@ let housesList:(House list) = [
 
 
 let houseHandler (name: string) =
-  printfn "get house %A" name
-  json housesList  
+  fun next context -> 
+    printfn "get house %A" name
+    json housesList next context
 
 let sendBytesHandler (name, remote, command) =
-  printfn "send bytes %s %s %s" name remote command
-  json "{}"
+  fun next (context: HttpContext) ->
+    printfn "send bytes %s %s %s" name remote command
+    let send = context.GetService<SendBytes>()
+    send (name, remote, command)
+    json "{}" next context
 
 let webApp =
    choose [ 
@@ -63,6 +67,7 @@ let configureApp (app : IApplicationBuilder) =
 let configureServices (services : IServiceCollection) =
     services.AddGiraffe() |> ignore
     services.AddSignalR() |> ignore 
+    services.AddSendBytes() |> ignore
     services.AddHostedService<IthoService>() |> ignore
 
 [<EntryPoint>]
