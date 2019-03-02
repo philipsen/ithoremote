@@ -8,6 +8,7 @@ open Microsoft.Extensions.FileProviders
 open Microsoft.AspNetCore.Http
 open System.IO
 
+open Itho
 
 let ngApp = tag "app-root"  [] []
 
@@ -29,17 +30,19 @@ let index =
   ]
 
 let webApp =
-   choose [ route "/" >=> (index |> renderHtmlDocument |> htmlString) ]
+   choose [ route "/app/" >=> (index |> renderHtmlDocument |> htmlString) ]
 
 let configureApp (app : IApplicationBuilder) =
   app.UseStaticFiles(
       StaticFileOptions(
           FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "frontend", "dist", "frontend")), RequestPath = PathString("/app")))
+      .UseSignalR(fun routes -> routes.MapHub<IthoHub>(PathString "/ithoHub")) // SignalR        
       .UseGiraffe(webApp)
 
 let configureServices (services : IServiceCollection) =
-    // Add Giraffe dependencies
     services.AddGiraffe() |> ignore
+    services.AddSignalR() |> ignore 
+    services.AddHostedService<IthoService>() |> ignore
 
 [<EntryPoint>]
 let main _ =
