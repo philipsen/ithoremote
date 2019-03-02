@@ -49,20 +49,20 @@ export class HousesService {
     return this.http.get<House[]>(this.url + 'houses');
   }
 
-  // getHouse(id: string): Observable<House> {
-  //   const url = this.url + 'house/' + id;
-  //   return this.http.get<House>(url);
-  // }
+  getHouse(id: string): Observable<House> {
+    const url = this.url + 'house/' + id;
+    return this.http.get<House>(url);
+  }
 
-  // getButtons(id: String): IthoButton[] {
-  //   let b = Wmt6Buttons;
-  //   switch (id) {
-  //       case 'wmt40':
-  //           b = Wmt40Buttons;
-  //   }
-  //   console.log('getButtons', id, b);
-  //   return b;
-  // }
+  getButtons(id: String): IthoButton[] {
+    let b = Wmt6Buttons;
+    switch (id) {
+        case 'wmt40':
+            b = Wmt40Buttons;
+    }
+    console.log('getButtons', id, b);
+    return b;
+  }
 
 }
 

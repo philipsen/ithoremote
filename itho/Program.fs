@@ -36,11 +36,16 @@ let housesList:(House list) = [
   { name = "wmt40" }
 ]
 
+
+let houseHandler (name: string) =
+  printfn "get house %A" name
+  json housesList  
+
 let webApp =
    choose [ 
-     route "/app/" >=> (index |> renderHtmlDocument |> htmlString) 
-     route "/app/houses" >=> (index |> renderHtmlDocument |> htmlString) 
      route "/api/houses" >=> (json housesList)
+     routef "/api/house/%s" (houseHandler)
+     (index |> renderHtmlDocument |> htmlString)
      ]
 
 let configureApp (app : IApplicationBuilder) =

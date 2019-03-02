@@ -5,13 +5,15 @@ import { HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { HousesListComponent } from './houses-list/houses-list.component';
+import { HouseDetailComponent } from './house-detail/house-detail.component';
+import { IthoButtonComponent } from './itho-button/itho-button.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     HousesListComponent,
-    // HouseDetailComponent,
-    // IthoButtonComponent
+    HouseDetailComponent,
+    IthoButtonComponent,
   ],
   imports: [
     BrowserModule,
