@@ -15,7 +15,7 @@ export class HouseDetailComponent implements OnInit {
     private housesService: HousesService,
     // private remoteCommandService: RemoteCommandService,
     private route: ActivatedRoute
-) { }
+  ) { }
 
   house = new House;
   buttons: IthoButton[];
@@ -29,11 +29,11 @@ export class HouseDetailComponent implements OnInit {
   getHouse(): void {
     const id = this.route.snapshot.paramMap.get('id');
     this.housesService.getHouse(id)
-        .subscribe(house => this.house = house);
-}
+      .subscribe(house => this.house = house);
+  }
 
-getButtons(): void {
+  getButtons(): void {
     const id = this.route.snapshot.paramMap.get('id');
     this.buttons = this.housesService.getButtons(id);
-}
+  }
 }

@@ -50,12 +50,8 @@ type Mqtt() =
 
   member this.SendBytes (name:string, remote:string, command:string) : unit =
     let topic = "itho/" + name + "/send"
-    printfn "t = %s " topic 
-    let cb = remoteDefinitions.commandBytes command 
-    printfn "cb = %s" cb.Value
-    let rb = remoteDefinitions.remoteBytes remote
-    printfn "rbv %A" rb
-    printfn "rb = %s" rb.Value
+    let cb = remoteDefinitions.commandBytes command
+    let rb = name + "/" + remote |> remoteDefinitions.remoteBytes
     let payload = rb.Value + "/" + cb.Value |> Encoding.ASCII.GetBytes
     node.Publish(topic, payload) |> ignore
 
@@ -73,7 +69,7 @@ type IthoService (hubContext :IHubContext<IthoHub, IClientApi>) =
   member this.HubContext :IHubContext<IthoHub, IClientApi> = hubContext
 
   override this.ExecuteAsync (stoppingToken :CancellationToken) =
-    let pingTimer = new System.Timers.Timer(5000.0)
+    let pingTimer = new System.Timers.Timer(15000.0)
     pingTimer.Elapsed.Add(fun _ -> 
         printfn "ping"
         this.HubContext.Clients.All.Message("aap") |> ignore)

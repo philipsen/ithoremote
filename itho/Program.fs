@@ -40,11 +40,11 @@ let housesList:(House list) = [
 let houseHandler (name: string) =
   fun next context -> 
     printfn "get house %A" name
-    json housesList next context
+    let h = {name = name}
+    json h next context
 
 let sendBytesHandler (name, remote, command) =
   fun next (context: HttpContext) ->
-    printfn "send bytes %s %s %s" name remote command
     let send = context.GetService<SendBytes>()
     send (name, remote, command)
     json "{}" next context
