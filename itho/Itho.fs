@@ -18,7 +18,7 @@ type IthoService (hubContext :IHubContext<IthoHub, IClientApi>) =
   member this.HubContext :IHubContext<IthoHub, IClientApi> = hubContext
 
   override this.ExecuteAsync (stoppingToken :CancellationToken) =
-    let pingTimer = new System.Timers.Timer(1000.0)
+    let pingTimer = new System.Timers.Timer(5000.0)
     pingTimer.Elapsed.Add(fun _ -> 
         printfn "ping"
         this.HubContext.Clients.All.Message("aap") |> ignore)

@@ -29,8 +29,19 @@ let index =
           (ngApp :: ngScripts)
   ]
 
+type House = { name: string }
+
+let housesList:(House list) = [
+  { name = "wmt6" }
+  { name = "wmt40" }
+]
+
 let webApp =
-   choose [ route "/app/" >=> (index |> renderHtmlDocument |> htmlString) ]
+   choose [ 
+     route "/app/" >=> (index |> renderHtmlDocument |> htmlString) 
+     route "/app/houses" >=> (index |> renderHtmlDocument |> htmlString) 
+     route "/api/houses" >=> (json housesList)
+     ]
 
 let configureApp (app : IApplicationBuilder) =
   app.UseStaticFiles(
