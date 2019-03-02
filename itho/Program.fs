@@ -4,27 +4,38 @@ open System
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Giraffe.GiraffeViewEngine
+open Microsoft.Extensions.FileProviders
+open Microsoft.AspNetCore.Http
+open System.IO
+
+
+let ngApp = tag "app-root"  [] []
+
+let ngScripts = 
+  [ "runtime.js"; "polyfills.js"; "styles.js"; "vendor.js"; "main.js" ]
+  |> List.map (function js -> script [ _type "text/javascript"; _src js ] [] )
 
 let index = 
-      html [] [
-          head [] [
-              title [] [ str "Giraffe!" ]
-          ]
-          body [] [
-              h1 [] [ str "Hello!" ]
-              p [] [ str "A test of Giraffe and .NET Core"]
-          ]
+  html [ _lang "en" ] [
+      head [] [
+          meta [ _charset "utf-8"; _name "viewport"; _content "width=device-width, initial-scale=1" ] 
+          title [] [ str "Angular + Giraffe" ]
+          ``base`` [ _href "/app/" ]
+          link [ _rel "icon"; _type "icon"; _href "favicon.ico" ]
       ]
 
+      body [] 
+          (ngApp :: ngScripts)
+  ]
+
 let webApp =
-    choose [
-        route "/ping"   >=> text "pong"
-        route "/"       >=> htmlFile "/pages/index.html" 
-        route "/aap" >=> (index |> renderHtmlDocument |> htmlString) ]
+   choose [ route "/" >=> (index |> renderHtmlDocument |> htmlString) ]
 
 let configureApp (app : IApplicationBuilder) =
-    // Add Giraffe to the ASP.NET Core pipeline
-    app.UseGiraffe webApp
+  app.UseStaticFiles(
+      StaticFileOptions(
+          FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "frontend", "dist", "frontend")), RequestPath = PathString("/app")))
+      .UseGiraffe(webApp)
 
 let configureServices (services : IServiceCollection) =
     // Add Giraffe dependencies
