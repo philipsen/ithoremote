@@ -55,6 +55,12 @@ type Mqtt() =
     let payload = rb.Value + "/" + cb.Value |> Encoding.ASCII.GetBytes
     node.Publish(topic, payload) |> ignore
 
+  member this.SetMessageLevel (name, kind, onOff): unit =
+    let topic = name + "/set/"
+    let payload = kind + "/" + onOff |> Encoding.ASCII.GetBytes
+    node.Publish(topic, payload) |> ignore
+
+
 let mqtt = Mqtt()
 
 type IClientApi = 
@@ -78,6 +84,10 @@ type IthoService (hubContext :IHubContext<IthoHub, IClientApi>) =
 
 type SendBytes = string * string * string -> unit
 
+type SetMessageLevel = string * string * string -> unit
+
 type IServiceCollection with
   member this.AddSendBytes () =
     this.AddSingleton<SendBytes>(mqtt.SendBytes) |> ignore
+    this.AddSingleton<SetMessageLevel>(mqtt.SetMessageLevel) |> ignore
+    

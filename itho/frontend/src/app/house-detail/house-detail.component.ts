@@ -3,6 +3,7 @@ import { HousesService } from '../services/houses.service';
 import { House } from '../models/house';
 import { ActivatedRoute } from '@angular/router';
 import { IthoButton } from '../models/itho-button';
+import { RemoteCommandService } from '../services/remote-command.service';
 
 @Component({
   selector: 'app-house-detail',
@@ -13,7 +14,7 @@ export class HouseDetailComponent implements OnInit {
 
   constructor(
     private housesService: HousesService,
-    // private remoteCommandService: RemoteCommandService,
+    private remoteCommandService: RemoteCommandService,
     private route: ActivatedRoute
   ) { }
 
@@ -25,6 +26,11 @@ export class HouseDetailComponent implements OnInit {
     this.getButtons();
   }
 
+  setMessagesOn(v: boolean): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    this.remoteCommandService.setMessageLevel(id, v).subscribe(() => {
+    });
+  }
 
   getHouse(): void {
     const id = this.route.snapshot.paramMap.get('id');

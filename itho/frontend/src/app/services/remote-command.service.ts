@@ -18,6 +18,16 @@ export class RemoteCommandService {
     // private messageService: MessageService
   ) { }
 
+  setMessageLevel(id: string, v: boolean): Observable<any> {
+    this.log('setMessageLevel');
+    const url = '/api/messages/' + id + '/printNonRemote/' + (v ? 'true' : 'false');
+    this.log('url = ' + url);
+    return this.http.get(url).pipe(
+      tap(_ => this.log(`send command ${url}`)),
+      catchError(this.handleError<any>('send command2')
+    ));
+  }
+
   sendCommand(house: string, room: string, cmd: string): Observable<any> {
     const url = this.url + house + '/' + room + '/' + cmd;
     return this.http.get(url).pipe(

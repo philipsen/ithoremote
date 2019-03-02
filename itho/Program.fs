@@ -49,11 +49,19 @@ let sendBytesHandler (name, remote, command) =
     send (name, remote, command)
     json "{}" next context
 
+let sendUpdateMessageLevel (name, kind, onOff) =
+  fun next (context: HttpContext) ->
+    printfn "set message level"
+    let send = context.GetService<SetMessageLevel>()
+    send (name, kind, onOff)
+    json "{}" next context
+
 let webApp =
    choose [ 
      route "/api/houses" >=> (json housesList)
      routef "/api/house/%s" (houseHandler)
      routef "/api/command/sendBytes/%s/%s/%s" (sendBytesHandler)
+     routef "/api/messages/%s/%s/%s" (sendUpdateMessageLevel)
      (index |> renderHtmlDocument |> htmlString)
      ]
 
