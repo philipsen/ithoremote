@@ -41,10 +41,15 @@ let houseHandler (name: string) =
   printfn "get house %A" name
   json housesList  
 
+let sendBytesHandler (name, remote, command) =
+  printfn "send bytes %s %s %s" name remote command
+  json "{}"
+
 let webApp =
    choose [ 
      route "/api/houses" >=> (json housesList)
      routef "/api/house/%s" (houseHandler)
+     routef "/api/command/sendBytes/%s/%s/%s" (sendBytesHandler)
      (index |> renderHtmlDocument |> htmlString)
      ]
 

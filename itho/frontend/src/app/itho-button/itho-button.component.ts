@@ -1,6 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { IthoButton } from 'src/app/models/itho-button';
 import { HousesService } from 'src/app/services/houses.service';
+import { RemoteCommandService } from '../services/remote-command.service';
 
 @Component({
   selector: 'app-itho-button',
@@ -14,15 +15,15 @@ export class IthoButtonComponent implements OnInit {
 
   constructor(
     private housesService: HousesService,
-    // private remoteCommandService: RemoteCommandService
+   private remoteCommandService: RemoteCommandService
     ) { }
 
   ngOnInit() {
   }
 
-  // sendCommandBytes(remoteId: string, remoteCommand: string): void {
-  //   this.remoteCommandService.sendCommandBytes(this.house, remoteId, remoteCommand).subscribe(() => {
-  //   });
-  // }
+  sendCommandBytes(remoteId: string, remoteCommand: string): void {
+    this.remoteCommandService.sendCommandBytes(this.house, remoteId, remoteCommand).subscribe(() => {
+    });
+  }
 
 }
