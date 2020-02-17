@@ -8,9 +8,11 @@ open Giraffe.SerilogExtensions
 open House
 open HouseStatusFactory
 open Signalr
+open MqttConnection
 
 open Microsoft.AspNetCore.SignalR
 module HttpHouse =
+
     let handlers : HttpFunc -> HttpContext -> HttpFuncResult =
         choose [
             POST >=> route "/houses" >=>
@@ -52,4 +54,15 @@ module HttpHouse =
                     json houses next context
             )
 
+            PUT >=> routef "/house/command/%s/%s/%s" (fun (house, remote, command) -> 
+                fun next context ->
+                    let logger = context.Logger()
+                    //let cmd = context.Request.
+                    logger.Information("got {0} {1} {2}", house, remote, command)
+                    //MqttConnection. house remote "eco"
+                    let mqtt = context.GetService<SendMqttCommand>()
+                    let r = mqtt (house, remote) 
+                    logger.Information("res = {0}", r.ToString())
+                    text (sprintf "req = %s %s" house remote) next context
+            )
         ]    

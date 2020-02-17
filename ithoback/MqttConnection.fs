@@ -49,11 +49,40 @@ open HouseStatusFactory
 open Db
 open Domain
 
+type Connection2() =
+    let node = MqttClient(brokerHostName="167.99.32.103")
+
+    do
+       "Connection ctor2" |> Information
+       node.Connect("fsharp_recv", "itho", "aapnootmies") |> ignore
+       let cs= node.IsConnected
+       Information("is connected " + cs.ToString())
+       let topics = [| "#" |]
+       let qos = [| MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE |]
+       let sr = node.Subscribe(topics, qos)
+       Information ("started: " + sr.ToString())
+
+    member this.RegisterListener(msgReceived) = 
+       node.MqttMsgPublishReceived.Add(msgReceived)
+
+
+    member this.SendCommand(house: string, remote: string) = 
+        Information("here " + house + " : " + remote)
+        let b: byte[] = [| |]
+        let cs= node.IsConnected
+        Information("is connected " + cs.ToString())
+        let res = node.Publish("aap/aap/aap", System.Text.Encoding.ASCII.GetBytes "ssdgsdgdsfg")
+        Information("res2 = " + res.ToString())
+        res
+
+let conn2 = Connection2() 
+
 type StateUpdate = {
     house: string
     target: Target
     state: HouseStatusFactory.State
 }
+
 
 type Connection (sp: IServiceProvider) =
     let _hub = sp.GetService<IHubContext<IthoHub>>() 
@@ -69,7 +98,6 @@ type Connection (sp: IServiceProvider) =
         }
         _hub.Clients.All.SendAsync("state", state) |> Async.AwaitTask |> ignore
 
-
     let node = MqttClient(brokerHostName="167.99.32.103")
 
     let msgReceived (e:MqttMsgPublishEventArgs) =
@@ -80,12 +108,16 @@ type Connection (sp: IServiceProvider) =
         | [|"itho"; "log"; house|], [|"send"; sender; remoteId; remoteCommand |] -> 
             processIncoming house sender remoteId remoteCommand
         | _ -> ()
-            
+
     do 
         "Connection ctor" |> Information
-        node.MqttMsgPublishReceived.Add(msgReceived)
-        node.Connect("fsharp_recv", "itho", "aapnootmies") |> ignore
-        let topics = [| "#" |]
-        let qos = [| MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE |]
-        let sr = node.Subscribe(topics, qos)
-        Information ("started: " + sr.ToString())
+        conn2.RegisterListener msgReceived
+
+let sendCommand (a, b): uint16 = 
+    conn2.SendCommand (a, b)
+
+type SendMqttCommand = string * string -> uint16
+
+type IServiceCollection with
+  member this.AddMqttService() =
+    this.AddSingleton<SendMqttCommand>(sendCommand) |> ignore

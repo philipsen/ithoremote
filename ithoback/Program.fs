@@ -16,6 +16,7 @@ open Serilog
 open HttpHouse
 open HousesMongoDB
 open Signalr
+open MqttConnection
 open Microsoft.AspNetCore.Http
 
 let webApp =
@@ -73,7 +74,8 @@ type Startup() =
         services.AddCors()    |> ignore
         services.AddGiraffe() |> ignore
         services.AddSignalR() |> ignore
-        services.AddHouseMongoDB(Db.houses) |> ignore        
+        services.AddHouseMongoDB(Db.houses) |> ignore 
+        services.AddMqttService() |> ignore       
 
     member __.Configure (app : IApplicationBuilder)
                         (env : IHostingEnvironment)
@@ -85,7 +87,7 @@ type Startup() =
             .UseSignalR(fun routes -> routes.MapHub<IthoHub>(PathString("/ithoHub")) |> ignore)
             .UseGiraffe appWithLogger
 
-        MqttConnection.Connection (app.ApplicationServices) |> ignore
+        Connection (app.ApplicationServices) |> ignore
             
 
 [<EntryPoint>]

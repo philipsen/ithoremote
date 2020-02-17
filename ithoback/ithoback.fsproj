@@ -36,10 +36,10 @@
     <Compile Include="Domain.fs" />
     <Compile Include="HouseStatusFactory.fs" />
     <Compile Include="Signalr.fs" />
-    <Compile Include="HttpHouse.fs" />
     <Compile Include="Db.fs" />
-    <Compile Include="HousesMongoDb.fs" />
     <Compile Include="MqttConnection.fs" />
+    <Compile Include="HttpHouse.fs" />
+    <Compile Include="HousesMongoDb.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
