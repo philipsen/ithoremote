@@ -31,7 +31,6 @@ Log.Logger <-
     .MinimumLevel.Debug()
     .Destructure.FSharpTypes()
     .WriteTo.Console()
-    //.WriteTo.Console(JsonFormatter())
     .CreateLogger()
 
 let config = 

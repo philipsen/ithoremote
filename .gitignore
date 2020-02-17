@@ -1,3 +1,5 @@
 .DS_Store
 obj
 bin
+ithoapp/.ionide/symbolCache.db
+ithoback/.ionide/symbolCache.db
