@@ -16,7 +16,7 @@ export class HousesService {
 
   public state: string;
 
-  private url = 'http://localhost:5000/api/';
+  private url = 'https://localhost:5001/api/';
   private hubConnection: signalR.HubConnection;
 
   constructor( private http: HttpClient) {
@@ -27,7 +27,7 @@ export class HousesService {
   public startConnection = () => {
     console.log('startConnection');
     this.hubConnection = new signalR.HubConnectionBuilder()
-                            .withUrl('http://localhost:5000/ithoHub')
+                            .withUrl('https://localhost:5001/ithoHub')
                             .build();
     this.hubConnection
       .start()

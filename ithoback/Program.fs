@@ -27,6 +27,7 @@ let webApp =
             ])
         setStatusCode 404 >=> text "Not Found2" ]
 
+
 Log.Logger <- 
   LoggerConfiguration()
     .MinimumLevel.Debug()
@@ -39,6 +40,7 @@ let config =
       ErrorHandler = fun ex context -> 
         Log.Error ex.Message
         setStatusCode 500 >=> text ex.Message }
+
 let appWithLogger = SerilogAdapter.Enable(webApp, config)
 
 let errorHandler (ex : Exception) (logger : ILogger) =
@@ -77,8 +79,7 @@ type Startup() =
         services.AddHouseMongoDB(Db.houses) |> ignore 
         services.AddMqttService() |> ignore       
 
-    member __.Configure (app : IApplicationBuilder)
-                        (env : IHostingEnvironment)
+    member __.Configure (app : IApplicationBuilder) 
                         (loggerFactory : ILoggerFactory) =
         loggerFactory.AddSerilog() |> ignore
         app

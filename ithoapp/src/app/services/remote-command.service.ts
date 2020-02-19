@@ -7,7 +7,7 @@ import { HttpClient } from '@angular/common/http';
 })
 export class RemoteCommandService {
 
-  private url = 'http://localhost:5000/api/';
+  private url = 'https://localhost:5001/api/';
 
   sendCommandBytes(house: string, remoteId: string, remoteCommand: string): Observable<Object> {
     console.log('remote command send: ' + house + ' -> ' + remoteId + '::' + remoteCommand);
