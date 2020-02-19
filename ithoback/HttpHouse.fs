@@ -54,15 +54,15 @@ module HttpHouse =
                     json houses next context
             )
 
-            PUT >=> routef "/house/command/%s/%s/%s" (fun (house, remote, command) -> 
+            PUT >=> routef "/house/command/%s/%s" (fun (house, remote) -> 
                 fun next context ->
                     let logger = context.Logger()
-                    //let cmd = context.Request.
-                    logger.Information("got {0} {1} {2}", house, remote, command)
-                    //MqttConnection. house remote "eco"
                     let mqtt = context.GetService<SendMqttCommand>()
-                    let r = mqtt (house, remote) 
-                    logger.Information("res = {0}", r.ToString())
-                    text (sprintf "req = %s %s" house remote) next context
+                    task {
+                       let! command = context.ReadBodyFromRequestAsync()
+                       logger.Information("got command to send: {0} {1} {2}", house, remote, command)
+                       mqtt (house, remote, command) |> ignore
+                       return! text "" next context
+                    }
             )
         ]    
