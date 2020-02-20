@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 
@@ -6,28 +6,35 @@ import { House } from '../models/house';
 import { Wmt40Buttons, Wmt6Buttons } from './houses.hardcodedbuttons';
 import { IthoButton } from '../models/itho-button';
 
+
+import { ConfigLoaderService } from './config-loader.service';
+
 import * as signalR from '@aspnet/signalr';
 
 @Injectable({
   providedIn: 'root'
 })
 
-export class HousesService {
+export class HousesService implements OnInit {
 
   public state: string;
 
-  private url = 'https://localhost:5001/api/';
   private hubConnection: signalR.HubConnection;
+  public url: string;
 
-  constructor( private http: HttpClient) {
+  constructor( private http: HttpClient, private configLoaderService: ConfigLoaderService) {
     this.startConnection();
     this.startSubscription();
   }
 
+  ngOnInit() {
+    this.url = this.configLoaderService.apiUrl;
+  }
+
   public startConnection = () => {
-    console.log('startConnection');
+    console.log('startConnection ' + this.configLoaderService.apiUrl);
     this.hubConnection = new signalR.HubConnectionBuilder()
-                            .withUrl('https://localhost:5001/ithoHub')
+                            .withUrl(this.configLoaderService.apiUrl + '/ithoHub')
                             .build();
     this.hubConnection
       .start()
@@ -46,11 +53,12 @@ export class HousesService {
   }
 
   getHouses(): Observable<House[]> {
-    return this.http.get<House[]>(this.url + 'houses');
+    console.log('url = ' + this.configLoaderService.apiUrl);
+    return this.http.get<House[]>(this.configLoaderService.apiUrl + '/api/houses');
   }
 
   getHouse(id: string): Observable<House> {
-    const url = this.url + 'house/' + id;
+    const url = this.configLoaderService.apiUrl + '/api/house/' + id;
     return this.http.get<House>(url);
   }
 
