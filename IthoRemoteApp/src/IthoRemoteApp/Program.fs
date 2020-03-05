@@ -67,12 +67,13 @@ let configureApp (app : IApplicationBuilder) =
 
     app.UseHttpsRedirection() |> ignore
     app.UseCors(configureCors) |> ignore
-    app.UseSignalR(fun routes -> routes.MapHub<IthoHub>(PathString("/ithoHub")) |> ignore)  |> ignore
-    // app.UseEndpoints(fun endpoints ->
-    //     let ps = PathString("/ithoHub")
-    //     printf "map ep %s" (ps.ToString())
-    //     endpoints.MapHub<IthoHub>(ps.ToString()) |> ignore
-    //  ) |> ignore
+    //app.UseSignalR(fun routes -> routes.MapHub<IthoHub>(PathString("/ithoHub")) |> ignore)  |> ignore
+    app.UseRouting() |> ignore
+    app.UseEndpoints(fun endpoints ->
+        let ps = PathString("/ithoHub")
+        printf "map ep %s" (ps.ToString())
+        endpoints.MapHub<IthoHub>(ps.ToString()) |> ignore
+     ) |> ignore
     app.UseGiraffe(webAppWithLogging) |> ignore    
     Mqtt.MqttConnection (app.ApplicationServices) |> ignore
     MyEventStore.EventStoreConnection (app.ApplicationServices) |> ignore
@@ -95,6 +96,7 @@ let main _ =
     WebHostBuilder()
         .UseKestrel()
         .UseIISIntegration()
+        
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
         //.ConfigureLogging(configureLogging)

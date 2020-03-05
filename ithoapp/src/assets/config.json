@@ -1,3 +1,4 @@
 {
-    "apiurl": "/itho"
+    "apiurl2": "/itho",
+    "apiurl": "https://localhost:5001"
 }

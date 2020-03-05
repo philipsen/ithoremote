@@ -102,7 +102,7 @@ type EventStoreConnection (sp: IServiceProvider) =
         
     let handler a b = 
         let d = getData b  |> System.Text.Encoding.ASCII.GetString
-        sprintf "new status %A\n" d |> Information
+        sprintf "new status %A" d |> Information
         _hub.Clients.All.SendAsync("state", d) |> Async.AwaitTask |> Async.RunSynchronously
 
     do 
