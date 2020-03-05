@@ -25,11 +25,11 @@ export class HouseDetailComponent implements OnInit {
     this.getButtons();
   }
 
-
   getHouse(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    this.housesService.getHouse(id)
-        .subscribe(house => this.house = house);
+    this.house.name = id;
+    // this.housesService.getHouse(id)
+    //     .subscribe(house => this.house = house);
 }
 
 getButtons(): void {

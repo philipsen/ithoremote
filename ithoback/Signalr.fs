@@ -9,5 +9,7 @@ type IthoHub (logger : ILogger<IthoHub>) =
 
     override this.OnConnectedAsync() =
         async{
-            this.Context.UserIdentifier |> sprintf "a new client connected{%A}" |>  _logger.LogInformation
+            let id = this.Context.UserIdentifier
+            id |> sprintf "a new client connected{%A}" |>  _logger.LogInformation
+            id |> printf "a new client connected{%A}" 
             } |> Async.StartAsTask :> _
