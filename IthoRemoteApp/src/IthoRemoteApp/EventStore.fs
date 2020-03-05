@@ -54,7 +54,7 @@ let addEvent data =
 
 let addEventDelayed delay event =
     async {   
-        do! Async.Sleep (delay * 1000)
+        do! Async.Sleep (delay * 1000 * 60)
         addEvent event
     } |> Async.Start
 

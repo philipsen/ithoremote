@@ -17,8 +17,6 @@ module log =
         log.Information
 open log
 
-// let node = MqttClient(brokerHostName="167.99.32.103")
-
 type MqttConnection (sp: IServiceProvider) =
     let _hub = sp.GetService<IHubContext<IthoHub>>()
     let node = MqttClient(brokerHostName="167.99.32.103")
