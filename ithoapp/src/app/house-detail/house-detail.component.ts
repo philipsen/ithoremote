@@ -19,17 +19,32 @@ export class HouseDetailComponent implements OnInit {
 
   house = new House;
   buttons: IthoButton[];
-
+  public canvasWidth = 500;
+  public needleValue = this.housesService.fanspeed;
+  public centralLabel = 'eco';
+  public name = this.housesService.state;
+  // public bottomLabel = '65'
+  public options = {
+      hasNeedle: true,
+      needleColor: 'gray',
+      needleUpdateSpeed: 0,
+      arcColors: ['rgb(44, 151, 222)', 'lightgray'],
+      arcDelimiters: [30],
+      rangeLabel: ['0', '100'],
+      needleStartValue: 50,
+  };
   ngOnInit() {
     this.getHouse();
     this.getButtons();
+    setInterval(() => {
+      this.needleValue = this.housesService.fanspeed;
+      this.centralLabel = this.housesService.state;
+    }, 2000);
   }
 
   getHouse(): void {
     const id = this.route.snapshot.paramMap.get('id');
     this.house.name = id;
-    // this.housesService.getHouse(id)
-    //     .subscribe(house => this.house = house);
 }
 
 getButtons(): void {

@@ -17,8 +17,8 @@ import * as signalR from '@aspnet/signalr';
 
 export class HousesService implements OnInit {
 
-  public state: string;
-  public fanspeed: Number;
+  public state: string = "";
+  public fanspeed: Number = 0;
 
   private hubConnection: signalR.HubConnection;
   public url: string;
@@ -26,6 +26,7 @@ export class HousesService implements OnInit {
   constructor( private http: HttpClient, private configLoaderService: ConfigLoaderService) {
     this.startConnection();
     this.startSubscription();
+    
   }
 
   ngOnInit() {
@@ -49,7 +50,7 @@ export class HousesService implements OnInit {
       let obj = JSON.parse(data);
       this.state = obj.state;
       this.fanspeed = obj.fanspeed;
-      console.log('fs = ' + this.fanspeed);
+      // console.log('fs = ' + this.fanspeed);
     });
   }
 

@@ -2,8 +2,13 @@
   <div class="row">
     <div class="col-sm">
       <h2>Itho Remote {{ house.name }} </h2>
-      <!-- <h3>Status: <app-itho-state></app-itho-state></h3> --> 
-      - {{ housesService.state }} - {{ housesService.fanspeed }} -
+      <rg-gauge-chart
+    [canvasWidth]="canvasWidth"
+    [needleValue]="needleValue"
+    [centralLabel]="centralLabel"
+    [options]="options"
+    [name]="name"
+    [bottomLabel]="bottomLabel"></rg-gauge-chart>
     </div>
   </div>
   <div class="row">

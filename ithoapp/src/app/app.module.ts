@@ -9,6 +9,7 @@ import { HouseDetailComponent } from './house-detail/house-detail.component';
 import { IthoButtonComponent } from './house-detail/itho-button/itho-button.component';
 import { ConfigLoaderService } from './services/config-loader.service';
 import { PreloadFactory } from './services/preload-service.factory';
+import { GaugeChartModule } from 'angular-gauge-chart';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,8 @@ import { PreloadFactory } from './services/preload-service.factory';
   imports: [
     BrowserModule,
     HttpClientModule,
-    AppRoutingModule
+    AppRoutingModule,
+    GaugeChartModule
   ],
   providers: [
     ConfigLoaderService,
