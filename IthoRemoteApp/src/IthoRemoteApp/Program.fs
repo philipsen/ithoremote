@@ -98,6 +98,7 @@ let main _ =
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
         //.ConfigureLogging(configureLogging)
+        // .UseUrls("http://0.0.0.0:5000,https://0.0.0.0:5001")
         .Build()
         .Run()
     0
