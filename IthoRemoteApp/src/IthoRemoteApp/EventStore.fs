@@ -6,7 +6,6 @@ open System.Net
 open Microsoft.AspNetCore.SignalR
 open Microsoft.Extensions.DependencyInjection
 
-open IthoRemoteApp.Domain
 open IthoRemoteApp.Signalr
 
 module log = 
@@ -14,6 +13,14 @@ module log =
     let Information =
         log.Information
 open log
+
+
+module Json =
+  open Newtonsoft.Json
+
+  let serialize obj =
+    JsonConvert.SerializeObject obj
+
 
 
 // let connSettings = "ConnectTo=tcp://itho:RoAb5!&19h6F@167.99.32.103:1113"
@@ -62,40 +69,6 @@ let storeEvent event =
     match event with 
     | Some event -> addEvent event
     | _ -> ()
-
-
-let createIthoTransmitRequestEvents house remote command =
-  let correlationId = Guid.NewGuid()
-  let startEvent = {
-    house = house
-    remote = remote
-    command = command
-    correlationId = correlationId
-  } 
-  startEvent |> addEvent
-
-  let delay = match command with
-              | "cook1" -> Some 30
-              | "cook2" -> Some 60
-              | "timer1" -> Some 60
-              | "timer2" -> Some 120
-              | "timer3" -> Some 180
-              | "s_timer1" -> Some 10
-              | "s_timer2" -> Some 20
-              | "s_timer3" -> Some 30
-              | _ -> None
- 
-  match delay with
-  | Some delay ->
-      let event = {
-        house = house
-        remote = remote
-        cancelCommand = command
-        correlationId = correlationId
-      }
-      event |> addEventDelayed delay
-  | _ -> ()
-  
 
 type EventStoreConnection (sp: IServiceProvider) =
     let _hub = sp.GetService<IHubContext<IthoHub>>()

@@ -23,21 +23,19 @@ type MqttConnection (sp: IServiceProvider) =
 
     let msgReceived (e:MqttMsgPublishEventArgs) =
         let m = Encoding.ASCII.GetString e.Message
-        // printf "mqtt: received %s -> %s\n" e.Topic m
-        let state = {
-            ventilation = m
-        }
+        sprintf "mqtt: received %s -> %s" e.Topic m |> Information
         // _hub.Clients.All.SendAsync("state", state) |> Async.AwaitTask |> Async.RunSynchronously
         match e.Topic.Split("/") with
-        | [|"itho"; "wmt6test"; "received"; "allcb"|] -> Domain.eventFromControlBoxPacket m |> MyEventStore.storeEvent
+        | [|"itho"; "wmt6test"; "received"; "allcb"|] -> 
+            Domain.eventFromControlBoxPacket m
         | [|"itho"; house; "received"; "handheld"|]
         | [|"itho"; house; "command"; "transmit"|] ->
             match m.Split("/") with
             | [| remote ; command |] ->
-                MyEventStore.createIthoTransmitRequestEvents house remote command
+                Domain.createIthoTransmitRequestEvents house remote command
             | _ -> printf "unknown command ignored %s\n" m
-        // | [|"itho"; house; "received"; "handheld"|] -> Domain.createIthoTransmitRequestEvent house m |> MyEventStore.storeEvent
-        | [|"itho"; house; "received"; "fanspeed"|] -> Domain.createIthoFanSpeedEvent house m |> MyEventStore.addEvent
+        | [|"itho"; house; "received"; "fanspeed"|] -> 
+            Domain.createIthoFanSpeedEvent house m
         | _ -> ()
 
     let connectNode (node: MqttClient) =

@@ -27,7 +27,7 @@ export class HouseDetailComponent implements OnInit {
   public options = {
       hasNeedle: true,
       needleColor: 'gray',
-      needleUpdateSpeed: 0,
+      needleUpdateSpeed: 3000,
       arcColors: ['rgb(44, 151, 222)', 'lightgray'],
       arcDelimiters: [30],
       rangeLabel: ['0', '100'],
@@ -37,6 +37,7 @@ export class HouseDetailComponent implements OnInit {
     this.getHouse();
     this.getButtons();
     setInterval(() => {
+      this.options.needleStartValue = this.needleValue.valueOf();
       this.needleValue = this.housesService.fanspeed;
       this.centralLabel = this.housesService.state;
     }, 2000);

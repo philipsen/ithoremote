@@ -1,77 +1,13 @@
 module IthoRemoteApp.Domain
 
-open Newtonsoft.Json
-
-type IthoEvent = {
-    receiver: string
-    payload: int list
-    rssi: int
-}
-
-type IthoControlBoxEvent = {
-  id: int list
-  house: Option<string>
-  rssi: int
-  fanspeed: int
-  unknown: int
-}
-
-type IthoTransmitEvent = {
-  house: string
-  remote: string
-  command: string
-  correlationId: System.Guid
-}
-
-type IthoTransmitCancelEvent = {
-  house: string
-  remote: string
-  cancelCommand: string
-  correlationId: System.Guid
-}
-
-type IthoFanSpeed = {
-  house: string
-  speed: int
-}
-
-
-type Event =
-    | IthoFanSpeed of IthoFanSpeed
-
-
-type EventHandler() =
-    member this.Handle = function
-        | IthoFanSpeed event ->
-            printf "here\n"
+open System
+open DomainTypes
 
 let createIthoFanSpeedEvent house (msg: string) =
   {
     house = house
     speed = (msg |> int)
-  }
-
-// let createIthoTransmitRequestEvent house (msg: string) =
-//   match msg.Split("/") with
-//   | [| remote ; command |] ->
-//       Some {
-//         house = house
-//         remote = remote
-//         command = command
-//         correlationId = System.Guid.NewGuid()
-//       }
-//   | _ -> None
-
-let createIthoHandheldEvent house (msg: string) =
-  match msg.Split("/") with
-  | [| remote ; command |] ->
-      Some {
-        house = house
-        remote = remote
-        command = command
-        correlationId = System.Guid.NewGuid()
-      }
-  | _ -> None
+  } |> MyEventStore.addEvent
 
 let parseControlBoxPacket (p: string) =
     let packet = p.Split ":"
@@ -94,12 +30,39 @@ let eventFromControlBoxPacket (p: string) =
       fanspeed = pll.[9] / 2
       unknown = pll.[13]
     }
-    Some p
+    p |> MyEventStore.addEvent
+  | _ -> ()
+
+let delayForCommand command =
+  match command with
+  | "cook1" -> Some 30
+  | "cook2" -> Some 60
+  | "timer1" -> Some 60
+  | "timer2" -> Some 120
+  | "timer3" -> Some 180
+  | "s_timer1" -> Some 10
+  | "s_timer2" -> Some 20
+  | "s_timer3" -> Some 30
   | _ -> None
 
+let createIthoTransmitRequestEvents house remote command =
+  let correlationId = Guid.NewGuid()
+  let startEvent = {
+    house = house
+    remote = remote
+    command = command
+    correlationId = correlationId
+  } 
+  startEvent |> MyEventStore.addEvent
 
-module Json =
-  open Newtonsoft.Json
-
-  let serialize obj =
-    JsonConvert.SerializeObject obj
+  let delay = delayForCommand command
+  match delay with
+  | Some delay ->
+      let event = {
+        house = house
+        remote = remote
+        cancelCommand = command
+        correlationId = correlationId
+      }
+      event |> MyEventStore.addEventDelayed delay
+  | _ -> ()
