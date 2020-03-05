@@ -58,11 +58,10 @@ let createIthoTransmitRequestEvents house remote command =
   let delay = delayForCommand command
   match delay with
   | Some delay ->
-      let event = {
+      {
         house = house
         remote = remote
         cancelCommand = command
         correlationId = correlationId
-      }
-      event |> MyEventStore.addEventDelayed delay
+      } |> MyEventStore.addEventDelayed delay
   | _ -> ()
