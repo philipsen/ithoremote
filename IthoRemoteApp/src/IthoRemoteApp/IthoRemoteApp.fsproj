@@ -8,6 +8,7 @@
     <ProjectReference Include="..\EventStoreWrapper\EventStoreWrapper.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Json.fs" />
     <Compile Include="Models.fs" />
     <Compile Include="Domain.Types.fs" />
     <Compile Include="Signalr.fs" />

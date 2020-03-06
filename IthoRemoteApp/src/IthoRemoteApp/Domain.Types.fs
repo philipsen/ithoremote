@@ -36,3 +36,10 @@ type IthoFanSpeed = {
 
 type Event =
     | IthoFanSpeed of IthoFanSpeed
+
+type HouseState = {
+  transmits: int
+  fanspeed: int
+  baseState: string
+  state: string
+}

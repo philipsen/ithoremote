@@ -6,6 +6,7 @@ open System.Net
 open Microsoft.AspNetCore.SignalR
 open Microsoft.Extensions.DependencyInjection
 
+open IthoRemoteApp.Json
 open IthoRemoteApp.Signalr
 
 module log = 
@@ -13,14 +14,6 @@ module log =
     let Information =
         log.Information
 open log
-
-
-module Json =
-  open Newtonsoft.Json
-
-  let serialize obj =
-    JsonConvert.SerializeObject obj
-
 
 
 // let connSettings = "ConnectTo=tcp://itho:RoAb5!&19h6F@167.99.32.103:1113"
@@ -49,8 +42,13 @@ let connection =
 let getData (e: ResolvedEvent) = 
     e.Event.Data
 
+let getLastStateEvent () =
+    Conn.readEvent connection "$projections-states-result" (EventVersion.LastInStream) ResolveLinksStrategy.DontResolveLinks uc
+    |> Async.RunSynchronously
+    
+
 let addEvent data =
-    let s = Json.serialize data |> Text.Encoding.ASCII.GetBytes
+    let s = serialize data |> Text.Encoding.ASCII.GetBytes
     let eventPayload = 
         EventData(Guid.NewGuid(), data.GetType().Name, true, s, metadata)
         |> wrapEventData
@@ -72,11 +70,11 @@ let storeEvent event =
 
 type EventStoreConnection (sp: IServiceProvider) =
     let _hub = sp.GetService<IHubContext<IthoHub>>()
-        
+
     let handler a b = 
         let d = getData b  |> System.Text.Encoding.ASCII.GetString
         sprintf "new status %A" d |> Information
-        _hub.Clients.All.SendAsync("state", d) |> Async.AwaitTask |> Async.RunSynchronously
+        //_hub.Clients.All.SendAsync("state", d) |> Async.AwaitTask |> Async.RunSynchronously
 
     let rec dropped 
         (aaa:EventStoreSubscription) 
