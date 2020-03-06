@@ -45,4 +45,7 @@ type HouseState = {
 }
 
 let mutable currentState = "{ 
+  \"state\": \"none\",
+  \"fanspeed\": 0
 }"
+

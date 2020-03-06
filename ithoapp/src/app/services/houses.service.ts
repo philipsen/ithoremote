@@ -9,7 +9,7 @@ import { IthoButton } from '../models/itho-button';
 
 import { ConfigLoaderService } from './config-loader.service';
 
-import * as signalR from '@aspnet/signalr';
+import * as signalR from '@microsoft/signalr';
 
 @Injectable({
   providedIn: 'root'
@@ -17,7 +17,7 @@ import * as signalR from '@aspnet/signalr';
 
 export class HousesService implements OnInit {
 
-  public state: string = '';
+  public state = '';
   public fanspeed: Number = 0;
 
   private hubConnection: signalR.HubConnection;
@@ -36,6 +36,7 @@ export class HousesService implements OnInit {
     console.log('startConnection ' + this.configLoaderService.apiUrl);
     this.hubConnection = new signalR.HubConnectionBuilder()
                             .withUrl(this.configLoaderService.apiUrl + '/ithoHub')
+                            .withAutomaticReconnect([1000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000])
                             .build();
     this.hubConnection
       .start()
@@ -46,7 +47,7 @@ export class HousesService implements OnInit {
   private startSubscription() {
     this.hubConnection.on('state', (data) => {
       console.log(data);
-      let obj = JSON.parse(data);
+      const obj = JSON.parse(data);
       this.state = obj.state;
       this.fanspeed = obj.fanspeed;
       // console.log('fs = ' + this.fanspeed);
