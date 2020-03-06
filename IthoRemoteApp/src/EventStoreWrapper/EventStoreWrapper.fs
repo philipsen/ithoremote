@@ -107,10 +107,10 @@ module internal Helpers =
   open EventStore.ClientAPI.Exceptions
 
   let canThrowWrongExpectedVersion awaitable =
-    printf "here3 %A\n" awaitable
+    // printf "here3 %A\n" awaitable
     async {
       try
-        printf "here4\n"
+        // printf "here4\n"
         let! res = awaitable
         return Choice1Of2(res)
       with :? WrongExpectedVersionException as ex ->
@@ -925,10 +925,10 @@ module Conn =
                          streamId
                          expectedVersion credentials
                          (eventData : EventStore.ClientAPI.EventData list) =
-    (c.AppendToStream(streamId, expectedVersion, credentials, eventData)).Wait()
+    c.AppendToStream(streamId, expectedVersion, credentials, eventData)
     //|> Async.AwaitTask
-    //|> awaitTask
-    //|> canThrowWrongExpectedVersion
+    |> awaitTask
+    |> canThrowWrongExpectedVersion
 
   /// <summary><para>
   /// AppendToStreamAsync:

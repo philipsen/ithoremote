@@ -47,13 +47,12 @@ let delayForCommand command =
 
 let createIthoTransmitRequestEvents house remote command =
   let correlationId = Guid.NewGuid()
-  let startEvent = {
+  {
     house = house
     remote = remote
     command = command
     correlationId = correlationId
-  } 
-  startEvent |> MyEventStore.addEvent
+  } |> MyEventStore.addEvent
 
   let delay = delayForCommand command
   match delay with

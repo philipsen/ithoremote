@@ -49,15 +49,14 @@ let connection =
 let getData (e: ResolvedEvent) = 
     e.Event.Data
 
-let dropped a b c =
-    printf "dropped\n"
-
 let addEvent data =
     let s = Json.serialize data |> Text.Encoding.ASCII.GetBytes
     let eventPayload = 
         EventData(Guid.NewGuid(), data.GetType().Name, true, s, metadata)
         |> wrapEventData
-    Conn.append connection uc streamName ExpectedVersionUnion.Any [ eventPayload ]
+    async {
+        Conn.append connection uc streamName ExpectedVersionUnion.Any [ eventPayload ] |> ignore
+    } |> Async.Start |> ignore
 
 let addEventDelayed delay event =
     async {   
@@ -67,7 +66,8 @@ let addEventDelayed delay event =
 
 let storeEvent event =
     match event with 
-    | Some event -> addEvent event
+    | Some event -> 
+        addEvent event
     | _ -> ()
 
 type EventStoreConnection (sp: IServiceProvider) =
@@ -78,9 +78,19 @@ type EventStoreConnection (sp: IServiceProvider) =
         sprintf "new status %A" d |> Information
         _hub.Clients.All.SendAsync("state", d) |> Async.AwaitTask |> Async.RunSynchronously
 
+    let rec dropped 
+        (aaa:EventStoreSubscription) 
+        (bbb:SubscriptionDropReason) 
+        (ccc:exn) =
+        sprintf "dropped connection %A %A %A" aaa bbb 1   |> Information
+        printf "start new\n"
+        let s = Conn.catchUp connection status ResolveLinks handler (Some dropped) uc
+        let s1 = s |> Async.RunSynchronously
+        printf "s = %A" s1
+        ()
+
     do 
         "EventStoreConnection ctor" |> Information
         Conn.connect(connection) |> Async.RunSynchronously
-        Conn.catchUp connection status ResolveLinks handler None uc |> ignore
-
-
+        let s = Conn.catchUp connection status ResolveLinks handler (Some dropped) uc
+        s |> Async.RunSynchronously |> ignore
