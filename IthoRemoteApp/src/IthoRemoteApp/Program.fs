@@ -70,9 +70,7 @@ let configureApp (app : IApplicationBuilder) =
     //app.UseSignalR(fun routes -> routes.MapHub<IthoHub>(PathString("/ithoHub")) |> ignore)  |> ignore
     app.UseRouting() |> ignore
     app.UseEndpoints(fun endpoints ->
-        let ps = PathString("/ithoHub")
-        printf "map ep %s" (ps.ToString())
-        endpoints.MapHub<IthoHub>(ps.ToString()) |> ignore
+        endpoints.MapHub<IthoHub>(PathString("/ithoHub").ToString()) |> ignore
      ) |> ignore
     app.UseGiraffe(webAppWithLogging) |> ignore    
     Mqtt.MqttConnection (app.ApplicationServices) |> ignore

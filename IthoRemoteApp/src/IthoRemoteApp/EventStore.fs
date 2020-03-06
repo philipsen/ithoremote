@@ -79,7 +79,7 @@ type EventStoreConnection (sp: IServiceProvider) =
         _hub.Clients.All.SendAsync("state", d) |> Async.AwaitTask |> Async.RunSynchronously
 
     do 
-        "EventStoreConnection ctor" |> Information 
+        "EventStoreConnection ctor" |> Information
         Conn.connect(connection) |> Async.RunSynchronously
         Conn.catchUp connection status ResolveLinks handler None uc |> ignore
 

@@ -23,8 +23,7 @@ type MqttConnection (sp: IServiceProvider) =
 
     let msgReceived (e:MqttMsgPublishEventArgs) =
         let m = Encoding.ASCII.GetString e.Message
-        sprintf "mqtt: received %s -> %s" e.Topic m |> Information
-        // _hub.Clients.All.SendAsync("state", state) |> Async.AwaitTask |> Async.RunSynchronously
+        // sprintf "mqtt: received %s -> %s" e.Topic m |> Information
         match e.Topic.Split("/") with
         | [|"itho"; "wmt6test"; "received"; "allcb"|] -> 
             Domain.eventFromControlBoxPacket m
@@ -40,7 +39,7 @@ type MqttConnection (sp: IServiceProvider) =
 
     let connectNode (node: MqttClient) =
         node.Connect("fs_rec", "itho", "aapnootmies") |> ignore
-        printf "mtqq connection: %A\n" node.IsConnected
+        sprintf "mtqq connection: %A\n" node.IsConnected |> Information
         let topics = [| "#" |]
         let qos = [| MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE |]
         let sr = node.Subscribe(topics, qos)
