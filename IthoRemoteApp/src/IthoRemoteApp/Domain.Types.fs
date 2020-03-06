@@ -43,3 +43,6 @@ type HouseState = {
   baseState: string
   state: string
 }
+
+let mutable currentState = "{ 
+}"

@@ -73,8 +73,9 @@ type EventStoreConnection (sp: IServiceProvider) =
 
     let handler a b = 
         let d = getData b  |> System.Text.Encoding.ASCII.GetString
+        IthoRemoteApp.DomainTypes.currentState <- d
         sprintf "new status %A" d |> Information
-        //_hub.Clients.All.SendAsync("state", d) |> Async.AwaitTask |> Async.RunSynchronously
+        _hub.Clients.All.SendAsync("state", d) |> Async.AwaitTask |> Async.RunSynchronously
 
     let rec dropped 
         (aaa:EventStoreSubscription) 

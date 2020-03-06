@@ -72,7 +72,8 @@ let configureApp (app : IApplicationBuilder) =
     app.UseEndpoints(fun endpoints ->
         endpoints.MapHub<IthoHub>(PathString("/ithoHub").ToString()) |> ignore
      ) |> ignore
-    app.UseGiraffe(webAppWithLogging) |> ignore    
+    app.UseGiraffe(webAppWithLogging) |> ignore 
+       
     Mqtt.MqttConnection (app.ApplicationServices) |> ignore
     MyEventStore.EventStoreConnection (app.ApplicationServices) |> ignore
 
@@ -90,15 +91,11 @@ let configureLogging (builder : ILoggingBuilder) =
 
 [<EntryPoint>]
 let main _ =
-    // Mqtt.connect
     WebHostBuilder()
         .UseKestrel()
         .UseIISIntegration()
-        
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
-        //.ConfigureLogging(configureLogging)
-        // .UseUrls("http://0.0.0.0:5000,https://0.0.0.0:5001")
         .Build()
         .Run()
     0
