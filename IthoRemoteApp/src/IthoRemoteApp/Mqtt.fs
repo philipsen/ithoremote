@@ -7,8 +7,6 @@ open uPLibrary.Networking.M2Mqtt.Messages
 
 open Microsoft.AspNetCore.SignalR
 open Microsoft.Extensions.DependencyInjection
-
-open IthoRemoteApp.Models
 open IthoRemoteApp.Signalr
 
 module log = 
@@ -17,9 +15,10 @@ module log =
         log.Information
 open log
 
+let node = MqttClient(brokerHostName="167.99.32.103")
+
 type MqttConnection (sp: IServiceProvider) =
     let _hub = sp.GetService<IHubContext<IthoHub>>()
-    let node = MqttClient(brokerHostName="167.99.32.103")
 
     let msgReceived (e:MqttMsgPublishEventArgs) =
         let m = Encoding.ASCII.GetString e.Message
@@ -50,6 +49,21 @@ type MqttConnection (sp: IServiceProvider) =
         //conn.RegisterListener msgReceived
         connectNode node |> ignore
         node.MqttMsgPublishReceived.Add msgReceived
+
+
+type SendMqttCommand = string * string * string -> unit
+
+let send (house, remote, command) =
+    printf "send command"
+    let topic = sprintf "itho/%s/command/transmit" house
+    let payload = sprintf "%s/%s" remote command
+    node.Publish(topic, System.Text.Encoding.ASCII.GetBytes payload) |> ignore
+
+type IServiceCollection with
+    member this.AddMqttService() =
+        this.AddSingleton<SendMqttCommand>(send) |> ignore
+
+
 
 
 

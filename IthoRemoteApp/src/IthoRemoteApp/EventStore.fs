@@ -16,22 +16,14 @@ module log =
 open log
 
 
-// let connSettings = "ConnectTo=tcp://itho:RoAb5!&19h6F@167.99.32.103:1113"
-// let conn = EventStoreConnection.Create (connSettings)
-// (conn.ConnectAsync()).Wait()
-
-
 let streamName = "newstream"
 let status = "$projections-states-result"
-// let metaData = 
-//     StreamMetadata.Build()
-//      .SetMaxCount(50L)
-//      .Build()
+
 
 // // printf "md = %A\n" metaData.MaxCount
-
+// let uc = SystemData.UserCredentials("itho", "YZ9fuf7%0I1z")
 let uc = SystemData.UserCredentials("wim", "ijs^4@#Q8U1t")
-printf "uc = %A\n" uc
+//printf "uc = %A\n" uc
 // let r = conn.SetStreamMetadataAsync(streamName, ExpectedVersion.Any |> int64, metaData, uc)
 
 let metadata = "{ }"B
@@ -68,6 +60,16 @@ let storeEvent event =
         addEvent event
     | _ -> ()
 
+let configureMetaData connection =
+    Information "configureMetaData"
+    let metaData = 
+        StreamMetadata.Build()
+         .SetMaxCount(15L)
+         .Build()
+    Conn.setMetadata connection "$projections-fanStates-result" ExpectedVersionUnion.Any metaData uc |> Async.RunSynchronously
+    Conn.setMetadata connection "newstream" ExpectedVersionUnion.Any metaData uc |> Async.RunSynchronously
+    Conn.setMetadata connection "$projections-states-result" ExpectedVersionUnion.Any metaData uc |> Async.RunSynchronously
+
 type EventStoreConnection (sp: IServiceProvider) =
     let _hub = sp.GetService<IHubContext<IthoHub>>()
 
@@ -85,11 +87,12 @@ type EventStoreConnection (sp: IServiceProvider) =
         printf "start new\n"
         let s = Conn.catchUp connection status ResolveLinks handler (Some dropped) uc
         let s1 = s |> Async.RunSynchronously
-        printf "s = %A" s1
+        // printf "s = %A" s1
         ()
 
     do 
         "EventStoreConnection ctor" |> Information
         Conn.connect(connection) |> Async.RunSynchronously
+        configureMetaData connection
         let s = Conn.catchUp connection status ResolveLinks handler (Some dropped) uc
         s |> Async.RunSynchronously |> ignore

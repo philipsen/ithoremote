@@ -14,6 +14,7 @@ open IthoRemoteApp.HttpHandlers
 
 open IthoRemoteApp.HouseService
 open IthoRemoteApp.Signalr
+open IthoRemoteApp.Mqtt
 
 // ---------------------------------
 // Web app
@@ -73,7 +74,7 @@ let configureApp (app : IApplicationBuilder) =
         endpoints.MapHub<IthoHub>(PathString("/ithoHub").ToString()) |> ignore
      ) |> ignore
     app.UseGiraffe(webAppWithLogging) |> ignore 
-       
+
     Mqtt.MqttConnection (app.ApplicationServices) |> ignore
     MyEventStore.EventStoreConnection (app.ApplicationServices) |> ignore
 
@@ -83,6 +84,7 @@ let configureServices (services : IServiceCollection) =
     services.AddGiraffe() |> ignore
     services.AddSignalR() |> ignore
     services.AddHouseService() |> ignore
+    services.AddMqttService() |> ignore
 
 let configureLogging (builder : ILoggingBuilder) =
     builder.AddFilter(fun l ->  l.Equals LogLevel.Debug |> not)

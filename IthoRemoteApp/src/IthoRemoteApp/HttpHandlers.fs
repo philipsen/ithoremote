@@ -7,6 +7,8 @@ open Giraffe
 open Giraffe.SerilogExtensions
 
 open HouseService
+open Mqtt
+
 
 module HttpHandlers =
 
@@ -31,6 +33,7 @@ module HttpHandlers =
             //         }
             GET >=> route "/houses" >=>
                 fun next context ->
+                    printf "here2"
                     let find = context.GetService<HouseAll>()
                     let houses = find()
                     json houses next context
@@ -44,22 +47,15 @@ module HttpHandlers =
             //         json state next context
             // )
 
-            // GET >=> routef "/house/%s" (fun id ->
-            //     fun next context ->
-            //         let find = context.GetService<HouseFindByName>()
-            //         let houses = find id
-            //         json houses next context
-            // )
-
-            // PUT >=> routef "/house/command/%s/%s" (fun (house, remote) -> 
-            //     fun next context ->
-            //         let logger = context.Logger()
-            //         let mqtt = context.GetService<SendMqttCommand>()
-            //         task {
-            //            let! command = context.ReadBodyFromRequestAsync()
-            //            logger.Information("got command to send: {0} {1} {2}", house, remote, command)
-            //            mqtt (house, remote, command) |> ignore
-            //            return! text "" next context
-            //         }
-            // )
+            PUT >=> routef "/house/command/%s/%s" (fun (house, remote) -> 
+                fun next context ->
+                    let logger = context.Logger()
+                    let mqtt = context.GetService<SendMqttCommand>()
+                    task {
+                       let! command = context.ReadBodyFromRequestAsync()
+                       logger.Information("got command to send: {0} {1} {2}", house, remote, command)
+                       mqtt (house, remote, command)
+                       return! text "" next context
+                    }
+            )
         ]    

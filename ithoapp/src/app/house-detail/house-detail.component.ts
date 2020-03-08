@@ -47,8 +47,8 @@ export class HouseDetailComponent implements OnInit {
       this.canvasWidth = Math.min(1500, this.targetElement.nativeElement.offsetWidth - 10);
       this.options.needleStartValue = this.needleValue.valueOf();
       this.needleValue = this.housesService.fanspeed;
-      this.centralLabel = this.needleValue.toString() + "%";
-      this.bottomLabel = this.housesService.state
+      this.centralLabel = this.needleValue.toString() + '%';
+      this.bottomLabel = this.housesService.state;
     }, 1000);
   }
 
