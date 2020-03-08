@@ -54,7 +54,6 @@ type MqttConnection (sp: IServiceProvider) =
 type SendMqttCommand = string * string * string -> unit
 
 let send (house, remote, command) =
-    printf "send command"
     let topic = sprintf "itho/%s/command/transmit" house
     let payload = sprintf "%s/%s" remote command
     node.Publish(topic, System.Text.Encoding.ASCII.GetBytes payload) |> ignore

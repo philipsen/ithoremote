@@ -33,7 +33,6 @@ module HttpHandlers =
             //         }
             GET >=> route "/houses" >=>
                 fun next context ->
-                    printf "here2"
                     let find = context.GetService<HouseAll>()
                     let houses = find()
                     json houses next context
