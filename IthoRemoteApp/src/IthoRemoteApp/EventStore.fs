@@ -13,12 +13,13 @@ module log =
     let log = Serilog.Log.Logger
     let Information =
         log.Information
+    let Fatal = 
+        log.Fatal
 open log
 
 
 let streamName = "newstream"
 let status = "$projections-states-result"
-
 
 // // printf "md = %A\n" metaData.MaxCount
 // let uc = SystemData.UserCredentials("itho", "YZ9fuf7%0I1z")
@@ -29,6 +30,9 @@ let uc = SystemData.UserCredentials("wim", "ijs^4@#Q8U1t")
 let metadata = "{ }"B
 let connection =
         ConnectionSettings.configureStart()
+        //|> ConnectionSettings.enableVerboseLogging
+        |> ConnectionSettings.keepReconnecting
+        |> ConnectionSettings.useConsoleLogger
         |> ConnectionSettings.configureEnd (IPEndPoint.Parse "167.99.32.103:1113")
 
 let getData (e: ResolvedEvent) = 
@@ -45,7 +49,7 @@ let addEvent data =
         EventData(Guid.NewGuid(), data.GetType().Name, true, s, metadata)
         |> wrapEventData
     async {
-        Conn.append connection uc streamName ExpectedVersionUnion.Any [ eventPayload ] |> ignore
+        Conn.append connection uc streamName Any [ eventPayload ] |> ignore
     } |> Async.Start |> ignore
 
 let addEventDelayed delay event =
@@ -66,9 +70,9 @@ let configureMetaData connection =
         StreamMetadata.Build()
          .SetMaxCount(15L)
          .Build()
-    Conn.setMetadata connection "$projections-fanStates-result" ExpectedVersionUnion.Any metaData uc |> Async.RunSynchronously
-    Conn.setMetadata connection "newstream" ExpectedVersionUnion.Any metaData uc |> Async.RunSynchronously
-    Conn.setMetadata connection "$projections-states-result" ExpectedVersionUnion.Any metaData uc |> Async.RunSynchronously
+    Conn.setMetadata connection "$projections-fanStates-result" Any metaData uc |> Async.RunSynchronously
+    Conn.setMetadata connection "newstream" Any metaData uc |> Async.RunSynchronously
+    Conn.setMetadata connection "$projections-states-result" Any metaData uc |> Async.RunSynchronously
 
 type EventStoreConnection (sp: IServiceProvider) =
     let _hub = sp.GetService<IHubContext<IthoHub>>()
@@ -83,16 +87,31 @@ type EventStoreConnection (sp: IServiceProvider) =
         (aaa:EventStoreSubscription) 
         (bbb:SubscriptionDropReason) 
         (ccc:exn) =
-        sprintf "dropped connection %A %A %A" aaa bbb 1   |> Information
-        printf "start new\n"
-        let s = Conn.catchUp connection status ResolveLinks handler (Some dropped) uc
-        let s1 = s |> Async.RunSynchronously
-        // printf "s = %A" s1
+        try
+            sprintf "dropped connection %A %A %A\n" aaa bbb ccc.GetType   |> Information
+            Async.Sleep(10000) |> Async.RunSynchronously
+            Information "try reconnect"
+            let s = Conn.catchUp connection status ResolveLinks handler (Some dropped) uc
+            let cts = new Threading.CancellationTokenSource()
+            let s1 = Async.RunSynchronously (s, 1000, cts.Token)
+            printf "s = %A\n" s1
+        with
+        | e -> 
+            e.GetType().Name + ": " + e.Message |> sprintf "Unable to renew subscription %A"  |> Fatal
+            exit 1
         ()
+
 
     do 
         "EventStoreConnection ctor" |> Information
-        Conn.connect(connection) |> Async.RunSynchronously
-        configureMetaData connection
-        let s = Conn.catchUp connection status ResolveLinks handler (Some dropped) uc
-        s |> Async.RunSynchronously |> ignore
+        try
+            Conn.connect(connection) |> Async.RunSynchronously
+            configureMetaData connection
+            let s = Conn.catchUp connection status ResolveLinks handler (Some dropped) uc
+            let sub = s |> Async.RunSynchronously
+            //printf "sub = %A\n" sub
+            ()
+        with
+            | :? Exceptions.ConnectionClosedException as ex ->
+                failwithf "Connection was closed"
+
