@@ -23,9 +23,8 @@ export class HousesService implements OnInit {
   private hubConnection: signalR.HubConnection;
   public url: string;
 
-  constructor( private http: HttpClient, private configLoaderService: ConfigLoaderService) {
+  constructor(private http: HttpClient, private configLoaderService: ConfigLoaderService) {
     this.startConnection();
-    this.startSubscription();
   }
 
   ngOnInit() {
@@ -35,18 +34,20 @@ export class HousesService implements OnInit {
   public startConnection = () => {
     console.log('startConnection ' + this.configLoaderService.apiUrl);
     this.hubConnection = new signalR.HubConnectionBuilder()
-                            .withUrl(this.configLoaderService.apiUrl + '/ithoHub')
-                            .withAutomaticReconnect([1000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000])
-                            .build();
+      .withUrl(this.configLoaderService.apiUrl + '/ithoHub')
+      .withAutomaticReconnect([1000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000])
+      .build();
     this.hubConnection
       .start()
       .then(() => console.log('Connection started'))
       .catch(err => console.log('Error while starting connection: ' + err));
   }
 
-  private startSubscription() {
-    this.hubConnection.on('state', (data) => {
-      console.log(data);
+  public startSubscription(house: string) {
+    const subName = 'state/' + house;
+    console.log('sub name = ' + subName);
+    this.hubConnection.on(subName, (data) => {
+      console.log('nd = ' + data);
       const obj = JSON.parse(data);
       this.state = obj.state;
       this.fanspeed = obj.fanspeed;
@@ -67,8 +68,8 @@ export class HousesService implements OnInit {
   getButtons(id: String): IthoButton[] {
     let b = Wmt6Buttons;
     switch (id) {
-        case 'wmt40':
-            b = Wmt40Buttons;
+      case 'wmt40':
+        b = Wmt40Buttons;
     }
     console.log('getButtons', id, b);
     return b;

@@ -70,28 +70,65 @@ let configureMetaData connection =
         StreamMetadata.Build()
          .SetMaxCount(15L)
          .Build()
-    Conn.setMetadata connection "$projections-fanStates-result" Any metaData uc |> Async.RunSynchronously
-    Conn.setMetadata connection "newstream" Any metaData uc |> Async.RunSynchronously
-    Conn.setMetadata connection "$projections-states-result" Any metaData uc |> Async.RunSynchronously
+    [
+        "newstream"
+        "status"
+        "$projections-fanStates-result"
+        "$projections-states-wmt6test-result"
+        "$projections-states-wmt10-result"
+        "$stats-0.0.0.0:2113"
+    ] |> List.iter (fun streamName -> 
+        Conn.setMetadata connection streamName Any metaData uc |> Async.RunSynchronously
+    )
+    // Conn.setMetadata connection "$projections-fanStates-result" Any metaData uc |> Async.RunSynchronously
+    // Conn.setMetadata connection "newstream" Any metaData uc |> Async.RunSynchronously
+    // Conn.setMetadata connection "$projections-states-result" Any metaData uc |> Async.RunSynchronously
 
-type EventStoreConnection (sp: IServiceProvider) =
+let configureProjections =
+    Information "config projections"
+    //let fs = IO.File.ReadAllText "../js/fanStates.js"
+    //sprintf "got %s\n\n" fs |> Information
+    let log2 = Common.Log.ConsoleLogger()
+    let ctx = {
+        logger = log2
+        ep = IPEndPoint.Parse "167.99.32.103:2113"
+        timeout = TimeSpan.FromMinutes 10.0
+        creds = uc
+    }
+    //Projections.getStatistics ctx "fanStates" |> Async.RunSynchronously |> sprintf "proj = %A" |> Information
+    //Projections.listAll ctx |> Async.RunSynchronously |> serialize |> sprintf "all %A" |> Information
+    //Projections.getState ctx "states"  |> Async.RunSynchronously |> serialize |> sprintf "states =  %A" |> Information
+    // Projections.updateQuery ctx "bla" fs |> Async.RunSynchronously
+    let projections = [
+        "fanStates"
+        "states"
+    ]
+
+    ()
+type EventStoreConnection (sp: IServiceProvider)  =
     let _hub = sp.GetService<IHubContext<IthoHub>>()
 
-    let handler a b = 
-        let d = getData b  |> System.Text.Encoding.ASCII.GetString
+    let handlerStatus _ (event: ResolvedEvent) = 
+        let house = match event.Event.StreamId.Split "-" with
+                    | [| "$projections"; "states"; house; "result" |] ->
+                        sprintf "house = %s" house |> Information
+                        house
+                    | _ -> ""
+         
+        let d = event.Event.Data  |> System.Text.Encoding.ASCII.GetString
         IthoRemoteApp.DomainTypes.currentState <- d
-        sprintf "new status %A" d |> Information
-        _hub.Clients.All.SendAsync("state", d) |> Async.AwaitTask |> Async.RunSynchronously
+        sprintf "new status2 %s -> %A" house d |> Information
+        _hub.Clients.All.SendAsync(("state/" + house), d) |> Async.AwaitTask |> Async.RunSynchronously
 
     let rec dropped 
-        (aaa:EventStoreSubscription) 
-        (bbb:SubscriptionDropReason) 
-        (ccc:exn) =
+        (subscription:EventStoreSubscription) 
+        (reason:SubscriptionDropReason) 
+        (ex:exn) =
         try
-            sprintf "dropped connection %A %A %A\n" aaa bbb ccc.GetType   |> Information
+            sprintf "dropped connection %A %A %A\n" subscription reason ex.GetType   |> Information
             Async.Sleep(10000) |> Async.RunSynchronously
             Information "try reconnect"
-            let s = Conn.catchUp connection status ResolveLinks handler (Some dropped) uc
+            let s = Conn.catchUp connection status ResolveLinks handlerStatus (Some dropped) uc
             let cts = new Threading.CancellationTokenSource()
             let s1 = Async.RunSynchronously (s, 1000, cts.Token)
             printf "s = %A\n" s1
@@ -105,11 +142,10 @@ type EventStoreConnection (sp: IServiceProvider) =
     do 
         "EventStoreConnection ctor" |> Information
         try
+            configureProjections
             Conn.connect(connection) |> Async.RunSynchronously
             configureMetaData connection
-            let s = Conn.catchUp connection status ResolveLinks handler (Some dropped) uc
-            let sub = s |> Async.RunSynchronously
-            //printf "sub = %A\n" sub
+            Conn.catchUp connection "status" ResolveLinks handlerStatus (None) uc |> Async.RunSynchronously |> ignore
             ()
         with
             | :? Exceptions.ConnectionClosedException as ex ->

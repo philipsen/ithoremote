@@ -22,7 +22,7 @@ type MqttConnection (sp: IServiceProvider) =
 
     let msgReceived (e:MqttMsgPublishEventArgs) =
         let m = Encoding.ASCII.GetString e.Message
-        sprintf "mqtt: received %s -> %s" e.Topic m |> Information
+        //sprintf "mqtt: received %s -> %s" e.Topic m |> Information
         match e.Topic.Split("/") with
         | [|"itho"; "wmt6test"; "received"; "allcb"|] -> 
             Domain.eventFromControlBoxPacket m

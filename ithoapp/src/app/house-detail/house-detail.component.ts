@@ -18,7 +18,10 @@ export class HouseDetailComponent implements OnInit {
     private housesService: HousesService,
     // private remoteCommandService: RemoteCommandService,
     private route: ActivatedRoute
-) { }
+) {
+  const id = this.route.snapshot.paramMap.get('id');
+  this.housesService.startSubscription(id);
+}
 
   house = new House;
   buttons: IthoButton[];
@@ -38,6 +41,7 @@ export class HouseDetailComponent implements OnInit {
       needleStartValue: 0,
   };
   ngOnInit() {
+    console.log('init component');
     const width = Math.min(1500, this.targetElement.nativeElement.offsetWidth);
     this.canvasWidth = width - 10;
 
