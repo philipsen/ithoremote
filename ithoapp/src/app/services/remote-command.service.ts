@@ -12,7 +12,7 @@ export class RemoteCommandService {
 
   sendCommandBytes(house: string, remoteId: string, remoteCommand: string): Observable<Object> {
     console.log('remote command send: ' + house + ' -> ' + remoteId + '::' + remoteCommand);
-    const url = this.url + '/api/house/command/' + house + 'test/' + remoteId;
+    const url = this.url + '/api/house/command/' + house + '/' + remoteId;
     console.log('url =' + url);
     return this.http.put(url, remoteCommand);
   }
