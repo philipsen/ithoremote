@@ -145,11 +145,11 @@ type EventStoreConnection (sp: IServiceProvider)  =
     let initSubsription() =
         "initSubsription" |> Information
         //Async.Sleep(10000) |> Async.RunSynchronously
-        // let s1 = Conn.catchUp connection "status" ResolveLinks handlerStatus (Some dropped) uc //|> Async.RunSynchronously
+        let s1 = Conn.catchUp connection "status" ResolveLinks handlerStatus (Some dropped) uc //|> Async.RunSynchronously
         // let cts = new Threading.CancellationTokenSource()
-        let s2 = Async.RunSynchronously //(s1, 10000, cts.Token)
+        let s2 = Async.RunSynchronously s1 //(s1, 10000, cts.Token)
         sprintf "s = %A" s2 |> log.Warning
-        sprintf "initSubsription done %A" s1 |> Information
+        //sprintf "initSubsription done %A" s1 |> Information
 
     let onCloseTask s e =
         sprintf "on close" |> Information
