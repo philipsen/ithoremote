@@ -144,9 +144,10 @@ type EventStoreConnection (sp: IServiceProvider)  =
 
     let initSubsription() =
         "initSubsription" |> Information
-        let s1 = Conn.catchUp connection "status" ResolveLinks handlerStatus (Some dropped) uc //|> Async.RunSynchronously
-        let cts = new Threading.CancellationTokenSource()
-        let s2 = Async.RunSynchronously (s1, 10000, cts.Token)
+        //Async.Sleep(10000) |> Async.RunSynchronously
+        // let s1 = Conn.catchUp connection "status" ResolveLinks handlerStatus (Some dropped) uc //|> Async.RunSynchronously
+        // let cts = new Threading.CancellationTokenSource()
+        let s2 = Async.RunSynchronously //(s1, 10000, cts.Token)
         sprintf "s = %A" s2 |> log.Warning
         sprintf "initSubsription done %A" s1 |> Information
 
@@ -155,7 +156,8 @@ type EventStoreConnection (sp: IServiceProvider)  =
 
     let onRecoTask s e =
         sprintf "on reco" |> Information
-    //     //Async.Sleep(10000) |> Async.RunSynchronously
+    //     //A
+    
     //     //sprintf "sleep done" |> Information
     //     initSubsription()
 
