@@ -191,7 +191,7 @@ type StreamId = string
 type GroupName = string
 type TransactionId = int64
 
-type ConnectionDisconnected = delegate of obj * ClientConnectionEventArgs -> unit
+type ConnectionDisconnected = delegate of EventHandler<ClientConnectionEventArgs> -> unit
 and ConnectionReconnecting = delegate of obj * ClientReconnectingEventArgs -> unit
 and ConnectionClosed = delegate of obj * ClientClosedEventArgs -> unit
 and ConnectionError = delegate of obj * ClientErrorEventArgs -> unit
@@ -206,12 +206,15 @@ and Connection =
   inherit IDisposable
 
   // events
-  //abstract Diconnected                   : IEvent<ConnectionDisconnected, ClientConnectionEventArgs>
-  //abstract Reconnecting                  : IEvent<ConnectionReconnecting, ClientReconnectingEventArgs>
-  //abstract Closed                        : IEvent<ConnectionClosed, ClientClosedEventArgs>
-  //abstract ErrorOccurred                 : IEvent<ConnectionError, ClientErrorEventArgs>
+  abstract Diconnected                   : IEvent<EventHandler<ClientConnectionEventArgs>, ClientConnectionEventArgs>
+  // abstract Reconnecting                  : IEvent<ConnectionReconnecting, ClientReconnectingEventArgs>
+  abstract Reconnecting                  : IEvent<EventHandler<ClientReconnectingEventArgs>,ClientReconnectingEventArgs>
+  abstract Closed                        : IEvent<EventHandler<ClientClosedEventArgs>, ClientClosedEventArgs>
+  abstract ErrorOccurred                 : IEvent<EventHandler<ClientErrorEventArgs>, ClientErrorEventArgs>
   //abstract AuthenticationFailed          : IEvent<ConnectionAuthenticationFailed, ClientAuthenticationFailedEventArgs>
+  abstract AuthenticationFailed          : IEvent<EventHandler<ClientAuthenticationFailedEventArgs>, ClientAuthenticationFailedEventArgs>
   //abstract Connected                     : IEvent<ConnectionConnected, ClientConnectionEventArgs>
+  abstract Connected                     : IEvent<EventHandler<ClientConnectionEventArgs>, ClientConnectionEventArgs>
 
   /// https://github.com/EventStore/EventStore/blob/ES-NET-v2.0.1/src/EventStore/EventStore.ClientAPI/IEventStoreConnection.cs#L181
   abstract AppendToStream                : StreamId
@@ -229,15 +232,15 @@ and Connection =
   /// https://github.com/EventStore/EventStore/blob/ES-NET-v2.0.1/src/EventStore/EventStore.ClientAPI/IEventStoreConnection.cs#L53
   abstract ConnectionName                : string
 
-//   abstract ConnectPersistentSubscription : StreamId
-//                                             * GroupName
-//                                             * Action<EventStorePersistentSubscription, ResolvedEvent>
-//                                             // subscriptionDropped:
-//                                             * Action<EventStorePersistentSubscription, SubscriptionDropReason, exn> option
-//                                             * SystemData.UserCredentials option
-//                                             * Count
-//                                             * bool
-//                                             -> EventStorePersistentSubscription
+  abstract ConnectToPersistentSubscription : StreamId
+                                            * GroupName
+                                            * Action<EventStorePersistentSubscriptionBase, ResolvedEvent>
+                                            // subscriptionDropped:
+                                            * Action<EventStorePersistentSubscriptionBase, SubscriptionDropReason, exn> option
+                                            * SystemData.UserCredentials option
+                                            * Count
+                                            * bool
+                                            -> EventStorePersistentSubscriptionBase
 
   /// https://github.com/EventStore/EventStore/blob/ES-NET-v2.0.1/src/EventStore/EventStore.ClientAPI/IEventStoreConnection.cs#L242
   abstract ContinueTransaction           : TransactionId
@@ -390,18 +393,20 @@ module TypeExtensions =
   open Helpers
   open AsyncHelpers
 
+
   type EventStore.ClientAPI.IEventStoreConnection with
     /// Convert the connection to be usable with the F# API (an interface
     /// to allow easy stubbing and mocking).
     member y.ApiWrap() : Connection =
       { new Connection with
 
-          //member Diconnected = y.Disconnected
-          //member Reconnecting = y.Reconnecting
-          //member Closed = y.Closed
-          //member ErrorOccurred = y.ErrorOccurred
-          //member AuthenticationFailed = y.AuthenticationFailed
-          //member Connected = y.Connected
+          member x.Diconnected = y.Disconnected
+          member x.Reconnecting = y.Reconnecting
+
+          member x.Closed = y.Closed
+          member x.ErrorOccurred = y.ErrorOccurred
+          member x.AuthenticationFailed = y.AuthenticationFailed
+          member x.Connected = y.Connected
 
           member x.AppendToStream(streamId, expectedVersion, userCredentials, events) =
             let m = match expectedVersion with
@@ -419,11 +424,11 @@ module TypeExtensions =
           member x.Connect () =
             y.ConnectAsync ()
 
-        //   member x.ConnectPersistentSubscription (streamId, groupName, eventAppeared, subscriptionDropped, userCredentials, bufferSize, autoAck) =
-        //     let bufferSize = validUint bufferSize |> int
-        //     y.ConnectToPersistentSubscription(streamId, groupName, eventAppeared,
-        //                                       Option.noneIsNull subscriptionDropped, Option.noneIsNull userCredentials,
-        //                                       bufferSize, autoAck)
+          member x.ConnectToPersistentSubscription (streamId, groupName, eventAppeared, subscriptionDropped, userCredentials, bufferSize, autoAck) =
+            let bufferSize = validUint bufferSize |> int
+            y.ConnectToPersistentSubscription(streamId, groupName, eventAppeared,
+                                              Option.noneIsNull subscriptionDropped, Option.noneIsNull userCredentials,
+                                              bufferSize, autoAck)
 
           member x.ContinueTransaction(txId, userCredentials) =
             y.ContinueTransaction(txId, userCredentials)
@@ -1075,12 +1080,12 @@ module Conn =
   /// you attempt to connect to a group that does not exist you will be given an exception.
   /// </remarks>
   /// <returns>An <see cref="EventStoreSubscription"/> representing the subscription</returns>
-//   let connectPersistent (c : Connection) streamId groupName eventAppeared
-//                         subscriptionDropped userCredentials bufferSize autoAck =
-//     c.ConnectPersistentSubscription(streamId, groupName,
-//                                     eventAppeared |> functor2 Types.wrapResolvedEvent |> action2,
-//                                     subscriptionDropped |> Option.map action3,
-//                                     userCredentials, bufferSize, autoAck)
+  let connectPersistent (c : Connection) streamId groupName eventAppeared
+                        subscriptionDropped userCredentials bufferSize autoAck =
+    c.ConnectToPersistentSubscription(streamId, groupName,
+                                    eventAppeared |> functor2 Types.wrapResolvedEvent |> action2,
+                                    subscriptionDropped |> Option.map action3,
+                                    userCredentials, bufferSize, autoAck)
 
   /// <summary>
   /// ContinueTransaction
