@@ -8,6 +8,7 @@ type IthoEvent = {
 }
 
 type IthoControlBoxEvent = {
+  sender: string
   id: int list
   house: Option<string>
   rssi: int

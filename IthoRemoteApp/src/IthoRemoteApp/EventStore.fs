@@ -108,13 +108,22 @@ let houseGetStatus house =
         let! s = Conn.readEvent connection ("$projections-states-"+ house + "-result") LastInStream DontResolveLinks uc
         return s.Event    
     }
-    // let rr = r |> Async.RunSynchronously
-    // printf "stat = %A\n" rr
-    // ()
+
+let dropped
+    (subscription:EventStoreSubscription) 
+    (reason:SubscriptionDropReason) 
+    (ex:exn) =
+    sprintf "dropped connection %A %A %A\n" subscription reason ex.GetType   |> Fatal
+    exit 1
 
 type EventStoreConnection (sp: IServiceProvider)  =
     let _hub = sp.GetService<IHubContext<IthoHub>>()
 
+    let handlerFanstateUpdate _ (event: ResolvedEvent) =
+        let d = event.Event.Data  |> System.Text.Encoding.ASCII.GetString
+        sprintf "new fanstates %A"  d |> Information
+        IthoRemoteApp.ClientSignalService.sendStatusFanspeed _hub d
+        
     let handlerStatus _ (event: ResolvedEvent) = 
         let house = match event.Event.StreamId.Split "-" with
                     | [| "$projections"; "states"; house; "result" |] ->

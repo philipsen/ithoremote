@@ -15,7 +15,7 @@ let parseControlBoxPacket (p: string) =
     let pll = packet.[.. packet.Length-2] |> Array.toList |> List.map (fun a -> "0x" + a |> int)
     rssi, pll
 
-let eventFromControlBoxPacket (p: string) =
+let eventFromControlBoxPacket sender (p: string) =
   let rssi, pll = parseControlBoxPacket p
   let id = pll.[2..3]
   let house = match id with
@@ -24,6 +24,7 @@ let eventFromControlBoxPacket (p: string) =
   match (pll.[0..1]) with
   | [0x14; 0x51] -> 
     let p = {
+      sender = sender
       id = id
       house = house
       rssi = rssi

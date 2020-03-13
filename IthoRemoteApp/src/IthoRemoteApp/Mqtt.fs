@@ -15,13 +15,12 @@ open log
 let node = MqttClient(brokerHostName="167.99.32.103")
 
 type MqttConnection (sp: IServiceProvider) =
-
     let msgReceived (e:MqttMsgPublishEventArgs) =
         let m = Encoding.ASCII.GetString e.Message
         //sprintf "mqtt: received %s -> %s" e.Topic m |> Information
         match e.Topic.Split("/") with
-        | [|"itho"; "wmt6test"; "received"; "allcb"|] -> 
-            Domain.eventFromControlBoxPacket m
+        | [|"itho"; house; "received"; "allcb"|] -> 
+            Domain.eventFromControlBoxPacket house m
         | [|"itho"; house; "received"; "handheld"|]
         | [|"itho"; house; "command"; "transmit"|] ->
             match m.Split("/") with
