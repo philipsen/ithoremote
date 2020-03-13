@@ -80,36 +80,40 @@ let configureMetaData connection =
     ] |> List.iter (fun streamName -> 
         Conn.setMetadata connection streamName Any metaData uc |> Async.RunSynchronously
     )
-    // Conn.setMetadata connection "$projections-fanStates-result" Any metaData uc |> Async.RunSynchronously
-    // Conn.setMetadata connection "newstream" Any metaData uc |> Async.RunSynchronously
-    // Conn.setMetadata connection "$projections-states-result" Any metaData uc |> Async.RunSynchronously
+    
+// let configureProjections =
+//     Information "config projections"
+//     //let fs = IO.File.ReadAllText "../js/fanStates.js"
+//     //sprintf "got %s\n\n" fs |> Information
+//     let log2 = Common.Log.ConsoleLogger()
+//     let ctx = {
+//         logger = log2
+//         ep = IPEndPoint.Parse "167.99.32.103:2113"
+//         timeout = TimeSpan.FromMinutes 10.0
+//         creds = uc
+//     }
+//     //Projections.getStatistics ctx "fanStates" |> Async.RunSynchronously |> sprintf "proj = %A" |> Information
+//     //Projections.listAll ctx |> Async.RunSynchronously |> serialize |> sprintf "all %A" |> Information
+//     //Projections.getState ctx "states"  |> Async.RunSynchronously |> serialize |> sprintf "states =  %A" |> Information
+//     // Projections.updateQuery ctx "bla" fs |> Async.RunSynchronously
+//     let projections = [
+//         "fanStates"
+//         "states"
+//     ]
 
-let configureProjections =
-    Information "config projections"
-    //let fs = IO.File.ReadAllText "../js/fanStates.js"
-    //sprintf "got %s\n\n" fs |> Information
-    let log2 = Common.Log.ConsoleLogger()
-    let ctx = {
-        logger = log2
-        ep = IPEndPoint.Parse "167.99.32.103:2113"
-        timeout = TimeSpan.FromMinutes 10.0
-        creds = uc
+//     ()
+
+let houseGetStatus house = 
+    async {
+        let! s = Conn.readEvent connection ("$projections-states-"+ house + "-result") LastInStream DontResolveLinks uc
+        return s.Event    
     }
-    //Projections.getStatistics ctx "fanStates" |> Async.RunSynchronously |> sprintf "proj = %A" |> Information
-    //Projections.listAll ctx |> Async.RunSynchronously |> serialize |> sprintf "all %A" |> Information
-    //Projections.getState ctx "states"  |> Async.RunSynchronously |> serialize |> sprintf "states =  %A" |> Information
-    // Projections.updateQuery ctx "bla" fs |> Async.RunSynchronously
-    let projections = [
-        "fanStates"
-        "states"
-    ]
-
-    ()
-
+    // let rr = r |> Async.RunSynchronously
+    // printf "stat = %A\n" rr
+    // ()
 
 type EventStoreConnection (sp: IServiceProvider)  =
     let _hub = sp.GetService<IHubContext<IthoHub>>()
-
 
     let handlerStatus _ (event: ResolvedEvent) = 
         let house = match event.Event.StreamId.Split "-" with
@@ -121,7 +125,7 @@ type EventStoreConnection (sp: IServiceProvider)  =
         let d = event.Event.Data  |> System.Text.Encoding.ASCII.GetString
         IthoRemoteApp.DomainTypes.currentState <- d
         sprintf "new status2 %s -> %A" house d |> Information
-        _hub.Clients.All.SendAsync(("state/" + house), d) |> Async.AwaitTask |> Async.RunSynchronously
+        IthoRemoteApp.ClientSignalService.sendClientStatus _hub house d
 
     let rec dropped 
         (subscription:EventStoreSubscription) 
@@ -177,7 +181,7 @@ type EventStoreConnection (sp: IServiceProvider)  =
     do 
         "EventStoreConnection ctor" |> Information
         try
-            configureProjections
+            //configureProjections
             Conn.connect(connection) |> Async.RunSynchronously
             configureMetaData connection
             

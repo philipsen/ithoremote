@@ -1,4 +1,4 @@
 export class House {
-    name: string;
-    ip: string;
+    fanspeed: Number;
+    state: string;
 }

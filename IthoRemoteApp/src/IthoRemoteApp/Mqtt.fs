@@ -4,10 +4,7 @@ open System.Text
 
 open uPLibrary.Networking.M2Mqtt
 open uPLibrary.Networking.M2Mqtt.Messages
-
-open Microsoft.AspNetCore.SignalR
 open Microsoft.Extensions.DependencyInjection
-open IthoRemoteApp.Signalr
 
 module log = 
     let log = Serilog.Log.Logger
@@ -18,7 +15,6 @@ open log
 let node = MqttClient(brokerHostName="167.99.32.103")
 
 type MqttConnection (sp: IServiceProvider) =
-    let _hub = sp.GetService<IHubContext<IthoHub>>()
 
     let msgReceived (e:MqttMsgPublishEventArgs) =
         let m = Encoding.ASCII.GetString e.Message

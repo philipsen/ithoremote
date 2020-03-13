@@ -51,7 +51,6 @@ export class HousesService implements OnInit {
       const obj = JSON.parse(data);
       this.state = obj.state;
       this.fanspeed = obj.fanspeed;
-      // console.log('fs = ' + this.fanspeed);
     });
   }
 
@@ -61,7 +60,7 @@ export class HousesService implements OnInit {
   }
 
   getHouse(id: string): Observable<House> {
-    const url = this.configLoaderService.apiUrl + '/api/house/' + id;
+    const url = this.configLoaderService.apiUrl + '/api/house/status/' + id;
     return this.http.get<House>(url);
   }
 
