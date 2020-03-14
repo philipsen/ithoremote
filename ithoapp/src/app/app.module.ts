@@ -10,13 +10,17 @@ import { IthoButtonComponent } from './house-detail/itho-button/itho-button.comp
 import { ConfigLoaderService } from './services/config-loader.service';
 import { PreloadFactory } from './services/preload-service.factory';
 import { GaugeChartModule } from 'angular-gauge-chart';
+import { HousesAdminComponent } from './houses-admin/houses-admin.component';
+import { AdminItemComponent } from './houses-admin/admin-item/admin-item.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     HousesListComponent,
     HouseDetailComponent,
-    IthoButtonComponent
+    IthoButtonComponent,
+    HousesAdminComponent,
+    AdminItemComponent
   ],
   imports: [
     BrowserModule,

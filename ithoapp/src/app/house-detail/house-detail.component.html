@@ -1,7 +1,9 @@
 <div class="container">
   <div class="row">
     <div class="col-sm">
-      <h2>Itho Remote {{ house.name }} </h2>
+      <!-- <h2>Itho Remote {{ name }} 
+        {{ house.fanspeed }} {{ house.state }}
+        </h2> -->
 
     </div>
   </div>
@@ -16,7 +18,7 @@
       <div class="card">
         <div class="card-body">
           <div class="btn-block">
-            <app-itho-button *ngFor="let b of buttons" [button]="b" [house]="house.name">
+            <app-itho-button *ngFor="let b of buttons" [button]="b" [house]="name">
             </app-itho-button>
           </div>
         </div>

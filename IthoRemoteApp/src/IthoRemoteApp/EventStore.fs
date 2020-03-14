@@ -121,7 +121,7 @@ type EventStoreConnection (sp: IServiceProvider)  =
 
     let handlerFanstateUpdate _ (event: ResolvedEvent) =
         let d = event.Event.Data  |> System.Text.Encoding.ASCII.GetString
-        sprintf "new fanstates %A"  d |> Information
+        // sprintf "new fanstates %A"  d |> Information
         IthoRemoteApp.ClientSignalService.sendStatusFanspeed _hub d
         
     let handlerStatus _ (event: ResolvedEvent) = 
@@ -157,12 +157,9 @@ type EventStoreConnection (sp: IServiceProvider)  =
 
     let initSubsription() =
         "initSubsription" |> Information
-        //Async.Sleep(10000) |> Async.RunSynchronously
-        let s1 = Conn.catchUp connection "status" ResolveLinks handlerStatus (Some dropped) uc //|> Async.RunSynchronously
-        // let cts = new Threading.CancellationTokenSource()
-        let s2 = Async.RunSynchronously s1 //(s1, 10000, cts.Token)
-        sprintf "s = %A" s2 |> log.Warning
-        //sprintf "initSubsription done %A" s1 |> Information
+        Conn.catchUp connection "status" ResolveLinks handlerStatus (Some dropped) uc |> Async.RunSynchronously |> ignore
+        Conn.catchUp connection "$projections-fanStates-result" DontResolveLinks handlerFanstateUpdate (Some dropped) uc
+        |> Async.RunSynchronously |> ignore
 
     let onCloseTask s e =
         sprintf "on close" |> Information
@@ -203,3 +200,4 @@ type EventStoreConnection (sp: IServiceProvider)  =
         with
             | :? Exceptions.ConnectionClosedException as ex ->
                 failwithf "Connection was closed"
+

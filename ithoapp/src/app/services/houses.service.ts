@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 
 import { House } from '../models/house';
+import { FanState } from '../models/fanstate';
 import { Wmt40Buttons, Wmt6Buttons } from './houses.hardcodedbuttons';
 import { IthoButton } from '../models/itho-button';
 
@@ -17,11 +18,15 @@ import * as signalR from '@microsoft/signalr';
 
 export class HousesService implements OnInit {
 
-  public state = '';
-  public fanspeed: Number = 0;
-
+  // public state = '';
+  // public fanspeed: Number = 0;
+  public house: House = {
+    fanspeed: 0,
+    state: ''
+  };
   private hubConnection: signalR.HubConnection;
   public url: string;
+  fanstates: FanState[] = [];
 
   constructor(private http: HttpClient, private configLoaderService: ConfigLoaderService) {
     this.startConnection();
@@ -49,13 +54,28 @@ export class HousesService implements OnInit {
     this.hubConnection.on(subName, (data) => {
       console.log('nd = ' + data);
       const obj = JSON.parse(data);
-      this.state = obj.state;
-      this.fanspeed = obj.fanspeed;
+      this.house.state = obj.state;
+      this.house.fanspeed = obj.fanspeed;
+    });
+  }
+
+  public startFanstateSubscription() {
+    console.log('startFanstateSubscription');
+    const subName = 'fanstates';
+    this.hubConnection.on(subName, (data: string) => {
+      console.log('fs = ' + data);
+      const obj = JSON.parse(data);
+      const res = [];
+      // tslint:disable-next-line:forin
+      for (const st in obj['state']) {
+        obj['state'][st].id = st;
+        res.push(obj.state[st]);
+      }
+      this.fanstates = res;
     });
   }
 
   getHouses(): Observable<House[]> {
-    console.log('url = ' + this.configLoaderService.apiUrl);
     return this.http.get<House[]>(this.configLoaderService.apiUrl + '/api/houses');
   }
 
@@ -70,7 +90,6 @@ export class HousesService implements OnInit {
       case 'wmt40':
         b = Wmt40Buttons;
     }
-    console.log('getButtons', id, b);
     return b;
   }
 

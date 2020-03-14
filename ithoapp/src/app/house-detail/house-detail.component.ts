@@ -18,20 +18,17 @@ export class HouseDetailComponent implements OnInit {
     private housesService: HousesService,
     private route: ActivatedRoute
 ) {
-  const id = this.route.snapshot.paramMap.get('id');
-  this.housesService.startSubscription(id);
+  this.name = this.route.snapshot.paramMap.get('id');
+  this.house = this.housesService.house;
+  this.housesService.startSubscription(this.name);
 }
 
-  public house: House =  {
-    fanspeed: 1,
-    state: ''
-  };
-
   buttons: IthoButton[];
+  public house: House;
   public canvasWidth = 500;
-  public needleValue = this.house.fanspeed;
+  public needleValue = this.housesService.house.fanspeed;
   public centralLabel = '';
-  public name = this.house.state;
+  public name = this.housesService.house.state;
   public bottomLabel = '';
   // public bottomLabel = '65'
   public options = {
@@ -51,6 +48,7 @@ export class HouseDetailComponent implements OnInit {
     this.getHouse();
     this.getButtons();
     setInterval(() => {
+      this.house = this.housesService.house;
       this.canvasWidth = Math.min(1500, this.targetElement.nativeElement.offsetWidth - 10);
       this.options.needleStartValue = this.needleValue.valueOf();
       this.needleValue = this.house.fanspeed;
@@ -64,7 +62,7 @@ export class HouseDetailComponent implements OnInit {
     this.housesService.getHouse(id)
       .subscribe(house => {
         console.log('hs = ' + house.state + ' ' + house.fanspeed.toFixed());
-        this.house = house;
+        this.housesService.house = house;
       });
 }
 
