@@ -21,6 +21,8 @@ type MqttConnection (sp: IServiceProvider) =
         match e.Topic.Split("/") with
         | [|"itho"; house; "received"; "allcb"|] -> 
             Domain.eventFromControlBoxPacket house m
+        | [|"itho"; house; "received"; "allremotes"|] -> 
+            Domain.eventFromRemote house m
         | [|"itho"; house; "received"; "handheld"|]
         | [|"itho"; house; "command"; "transmit"|] ->
             match m.Split("/") with

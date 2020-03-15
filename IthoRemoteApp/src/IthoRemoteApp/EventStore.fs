@@ -126,9 +126,7 @@ type EventStoreConnection (sp: IServiceProvider)  =
         
     let handlerStatus _ (event: ResolvedEvent) = 
         let house = match event.Event.StreamId.Split "-" with
-                    | [| "$projections"; "states"; house; "result" |] ->
-                        sprintf "house = %s" house |> Information
-                        house
+                    | [| "$projections"; "states"; house; "result" |] -> house
                     | _ -> ""
          
         let d = event.Event.Data  |> System.Text.Encoding.ASCII.GetString

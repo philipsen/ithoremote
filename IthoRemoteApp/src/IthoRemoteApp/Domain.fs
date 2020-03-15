@@ -15,6 +15,9 @@ let parseControlBoxPacket (p: string) =
     let pll = packet.[.. packet.Length-2] |> Array.toList |> List.map (fun a -> "0x" + a |> int)
     rssi, pll
 
+let eventFromRemote sender (packet: string) =
+  printf "handheld remote: %s %s\n" sender packet
+
 let eventFromControlBoxPacket sender (p: string) =
   let rssi, pll = parseControlBoxPacket p
   let id = pll.[2..3]
