@@ -77,7 +77,7 @@ let configureApp (app : IApplicationBuilder) =
     app.UseGiraffe(webAppWithLogging) |> ignore 
     Common.Hub <- app.ApplicationServices.GetService<IHubContext<IthoHub>>()
     
-    MqttConnection() |> ignore
+    InitializeMqtt() |> ignore
     MyEventStore.EventStoreConnection() |> ignore
 
 
