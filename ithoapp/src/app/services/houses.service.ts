@@ -22,7 +22,7 @@ export class HousesService implements OnInit {
   };
   private hubConnection: signalR.HubConnection;
   public url: string;
-  fanstates: FanState[] = [];
+  public fanstates: FanState[] = [];
   transponders: Transponder[] = [];
 
   constructor(private http: HttpClient, private configLoaderService: ConfigLoaderService) {

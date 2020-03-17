@@ -11,7 +11,7 @@ export class HousesAdminComponent {
 
   fanstates: FanState[];
 
-  constructor(private houseService: HousesService) {
+  constructor(public houseService: HousesService) {
     this.houseService.startFanstateSubscription();
     this.houseService.startTransponderSubscription();
     this.fanstates = this.houseService.fanstates;
