@@ -16,8 +16,7 @@ module HttpHandlers =
 
             GET >=> route "/houses" >=>
                 fun next context ->
-                    let find = context.GetService<HouseAll>()
-                    let houses = find()
+                    let houses = allHouses()
                     json houses next context
             GET >=> routef "/house/status/%s" (fun (house) ->
                 fun next context ->
