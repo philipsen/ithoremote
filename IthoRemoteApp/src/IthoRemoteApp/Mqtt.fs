@@ -45,18 +45,10 @@ let InitializeMqtt() =
     connectNode node |> ignore
     node.MqttMsgPublishReceived.Add msgReceived
 
-
-type SendMqttCommand = string * string * string -> unit
-
-let send (house, remote, command) =
+let sendCommand (house, remote, command) =
     let topic = sprintf "itho/%s/command/transmit" house
     let payload = sprintf "%s/%s" remote command
     node.Publish(topic, System.Text.Encoding.ASCII.GetBytes payload) |> ignore
-
-type IServiceCollection with
-    member this.AddMqttService() =
-        this.AddSingleton<SendMqttCommand>(send) |> ignore
-
 
 
 

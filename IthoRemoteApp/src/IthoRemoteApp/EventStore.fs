@@ -3,11 +3,8 @@
 open EventStore.ClientAPI
 open System
 open System.Net
-open Microsoft.AspNetCore.SignalR
-open Microsoft.Extensions.DependencyInjection
 
 open IthoRemoteApp.Json
-open IthoRemoteApp.Signalr
 open IthoRemoteApp.ClientMessageService
 
 module log = 
@@ -21,19 +18,13 @@ open log
 
 let streamName = "newstream"
 let status = "$projections-states-result"
-
-// // printf "md = %A\n" metaData.MaxCount
-// let uc = SystemData.UserCredentials("itho", "YZ9fuf7%0I1z")
 let uc = SystemData.UserCredentials("wim", "ijs^4@#Q8U1t")
-//printf "uc = %A\n" uc
-// let r = conn.SetStreamMetadataAsync(streamName, ExpectedVersion.Any |> int64, metaData, uc)
 
 let metadata = "{ }"B
 let connection =
         ConnectionSettings.configureStart()
-        //|> ConnectionSettings.enableVerboseLogging
         |> ConnectionSettings.keepReconnecting
-        |> ConnectionSettings.useConsoleLogger
+        // |> ConnectionSettings.useConsoleLogger
         |> ConnectionSettings.configureEnd (IPEndPoint.Parse "167.99.32.103:1113")
 
 let getData (e: ResolvedEvent) = 
@@ -110,14 +101,6 @@ let houseGetStatus house =
         return s.Event    
     }
 
-// let dropped
-//     (subscription:EventStoreSubscription) 
-//     (reason:SubscriptionDropReason) 
-//     (ex:exn) =
-//     sprintf "dropped connection %A %A %A\n" subscription reason ex.GetType   |> Fatal
-//     exit 1
-
-// type EventStoreConnection () =
 let handlerFanstateUpdate _ (event: ResolvedEvent) =
     let status = event.Event.Data  |> System.Text.Encoding.ASCII.GetString
     sendToClients ("fanstates", status)

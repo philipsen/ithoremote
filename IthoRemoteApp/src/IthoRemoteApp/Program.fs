@@ -13,7 +13,6 @@ open Giraffe.SerilogExtensions
 open Serilog 
 open IthoRemoteApp.HttpHandlers
 
-open IthoRemoteApp.HouseService
 open IthoRemoteApp.Signalr
 open IthoRemoteApp.Mqtt
 open IthoRemoteApp.ClientMessageService
@@ -86,15 +85,11 @@ let configureServices (services : IServiceCollection) =
     services.AddCors()    |> ignore
     services.AddGiraffe() |> ignore
     services.AddSignalR() |> ignore
-    services.AddHouseService() |> ignore
-    services.AddMqttService() |> ignore
-    // services.AddClientMessageService() |> ignore
-    
 
-let configureLogging (builder : ILoggingBuilder) =
-    builder.AddFilter(fun l ->  l.Equals LogLevel.Debug |> not)
-           .AddConsole()
-           .AddDebug() |> ignore
+// let configureLogging (builder : ILoggingBuilder) =
+//     builder.AddFilter(fun l ->  l.Equals LogLevel.Debug |> not)
+//            .AddConsole()
+//            .AddDebug() |> ignore
 
 [<EntryPoint>]
 let main _ =

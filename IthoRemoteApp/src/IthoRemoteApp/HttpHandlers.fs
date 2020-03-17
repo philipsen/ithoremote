@@ -33,11 +33,11 @@ module HttpHandlers =
             PUT >=> routef "/house/command/%s/%s" (fun (house, remote) -> 
                 fun next context ->
                     let logger = context.Logger()
-                    let mqtt = context.GetService<SendMqttCommand>()
+                    // let mqtt = context.GetService<SendMqttCommand>()
                     task {
                        let! command = context.ReadBodyFromRequestAsync()
                        logger.Information("got command to send: {0} {1} {2}", house, remote, command)
-                       mqtt (house, remote, command)
+                       sendCommand (house, remote, command)
                        return! text "" next context
                     }
             )

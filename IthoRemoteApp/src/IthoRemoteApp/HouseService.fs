@@ -1,10 +1,11 @@
 module IthoRemoteApp.HouseService
 
-open Microsoft.Extensions.DependencyInjection
+type House = {
+    name: string
+    ip: string
+}
 
-open IthoRemoteApp.Models
 type HouseAll = unit -> House list
-
 
 let allHouses() = 
     [
@@ -14,8 +15,3 @@ let allHouses() =
         { name = "wmt40"; ip = "none" }
         { name = "wmt6test"; ip = "none" }
     ]
-
-type IServiceCollection with
-    member this.AddHouseService() =
-        this.AddSingleton<HouseAll>(allHouses) |> ignore
-
