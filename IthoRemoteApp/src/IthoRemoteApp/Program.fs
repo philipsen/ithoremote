@@ -88,7 +88,7 @@ let configureServices (services : IServiceCollection) =
     services.AddSignalR() |> ignore
     services.AddHouseService() |> ignore
     services.AddMqttService() |> ignore
-    services.AddClientMessageService() |> ignore
+    // services.AddClientMessageService() |> ignore
     
 
 let configureLogging (builder : ILoggingBuilder) =

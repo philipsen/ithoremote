@@ -31,10 +31,7 @@ let eventFromRemote sender (packet: string) =
         transponder = sender
         id = [ a1; a2; a3 ]
       }
-      //MyEventStore.sendToClients "handheld" (message |> Json.serialize)
       ClientMessageService.sendToClients ("handheld", (message |> Json.serialize))
-      ()
-
     | _ -> failwithf "no match %A\n" bytes
 
 let eventFromControlBoxPacket sender (p: string) =
