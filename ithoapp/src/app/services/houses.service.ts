@@ -6,8 +6,6 @@ import { House } from '../models/house';
 import { FanState } from '../models/fanstate';
 import { Wmt40Buttons, Wmt6Buttons } from './houses.hardcodedbuttons';
 import { IthoButton } from '../models/itho-button';
-
-
 import { ConfigLoaderService } from './config-loader.service';
 
 import * as signalR from '@microsoft/signalr';
@@ -18,9 +16,6 @@ import { Transponder } from '../models/transponders';
 })
 
 export class HousesService implements OnInit {
-
-  // public state = '';
-  // public fanspeed: Number = 0;
   public house: House = {
     fanspeed: 0,
     state: ''
@@ -52,9 +47,8 @@ export class HousesService implements OnInit {
 
   public startSubscription(house: string) {
     const subName = 'state/' + house;
-    console.log('sub name = ' + subName);
     this.hubConnection.on(subName, (data) => {
-      console.log('nd = ' + data);
+      // console.log('nd = ' + data);
       const obj = JSON.parse(data);
       this.house.state = obj.state;
       this.house.fanspeed = obj.fanspeed;
@@ -65,7 +59,7 @@ export class HousesService implements OnInit {
     console.log('startFanstateSubscription');
     const subName = 'fanstates';
     this.hubConnection.on(subName, (data: string) => {
-      console.log('fs = ' + data);
+      // console.log('fs = ' + data);
       const obj = JSON.parse(data);
       const res = [];
       // tslint:disable-next-line:forin
@@ -78,19 +72,9 @@ export class HousesService implements OnInit {
   }
 
   public startTransponderSubscription() {
-    console.log('startTransponderSubscription');
-    const subName = 'handheld';
-    this.hubConnection.on(subName, (data: string) => {
-      console.log('handheld = ' + data);
-      const obj = JSON.parse(data);
-      this.transponders.push(obj);
-      // const res = [];
-      // // tslint:disable-next-line:forin
-      // for (const st in obj['state']) {
-      //   obj['state'][st].id = st;
-      //   res.push(obj.state[st]);
-      // }
-      // this.fanstates = res;
+    this.hubConnection.on('handheld', (data: string) => {
+      // console.log('handheld = ' + data);
+      this.transponders.push(JSON.parse(data));
     });
   }
 

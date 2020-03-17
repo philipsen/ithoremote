@@ -26,7 +26,7 @@
         <tr *ngFor="let transponder of houseService.transponders.reverse()">
             <td> {{transponder.transponder }} </td>
             <td> {{ transponder.rssi }} </td>
-            <td> {{ transponder.id }} </td>
+            <td> {{ formatId(transponder.id) }} </td>
         </tr>
     </tbody>
 </table>

@@ -7,7 +7,7 @@ import { FanState } from '../models/fanstate';
   templateUrl: './houses-admin.component.html',
   styleUrls: ['./houses-admin.component.sass']
 })
-export class HousesAdminComponent implements OnInit {
+export class HousesAdminComponent {
 
   fanstates: FanState[];
 
@@ -17,10 +17,7 @@ export class HousesAdminComponent implements OnInit {
     this.fanstates = this.houseService.fanstates;
   }
 
-  ngOnInit() {
-    // setInterval(() => {
-    //   this.fanstates = this.houseService.fanstates;
-    // }, 1000);
+  formatId(id: Number[]) {
+    return id.map(s => s.toString(16)).join(':');
   }
-
 }
