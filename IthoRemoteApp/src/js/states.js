@@ -1,4 +1,4 @@
-onst states = {
+const states = {
     unknown: 'unknown',
     eco: 'eco',
     comfort: 'comfort',
