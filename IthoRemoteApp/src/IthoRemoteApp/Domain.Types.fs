@@ -45,8 +45,13 @@ type HouseState = {
   state: string
 }
 
-let mutable currentState = "{ 
-  \"state\": \"none\",
-  \"fanspeed\": 0
-}"
+// let mutable currentState = "{ 
+//   \"state\": \"none\",
+//   \"fanspeed\": 0
+// }"
 
+type HandheldRemoteMessage = {
+  rssi: int
+  transponder: string
+  id: int list
+}

@@ -11,6 +11,7 @@ import { IthoButton } from '../models/itho-button';
 import { ConfigLoaderService } from './config-loader.service';
 
 import * as signalR from '@microsoft/signalr';
+import { Transponder } from '../models/transponders';
 
 @Injectable({
   providedIn: 'root'
@@ -27,6 +28,7 @@ export class HousesService implements OnInit {
   private hubConnection: signalR.HubConnection;
   public url: string;
   fanstates: FanState[] = [];
+  transponders: Transponder[] = [];
 
   constructor(private http: HttpClient, private configLoaderService: ConfigLoaderService) {
     this.startConnection();
@@ -72,6 +74,23 @@ export class HousesService implements OnInit {
         res.push(obj.state[st]);
       }
       this.fanstates = res;
+    });
+  }
+
+  public startTransponderSubscription() {
+    console.log('startTransponderSubscription');
+    const subName = 'handheld';
+    this.hubConnection.on(subName, (data: string) => {
+      console.log('handheld = ' + data);
+      const obj = JSON.parse(data);
+      this.transponders.push(obj);
+      // const res = [];
+      // // tslint:disable-next-line:forin
+      // for (const st in obj['state']) {
+      //   obj['state'][st].id = st;
+      //   res.push(obj.state[st]);
+      // }
+      // this.fanstates = res;
     });
   }
 

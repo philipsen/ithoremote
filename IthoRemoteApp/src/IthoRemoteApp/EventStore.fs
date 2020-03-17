@@ -8,6 +8,7 @@ open Microsoft.Extensions.DependencyInjection
 
 open IthoRemoteApp.Json
 open IthoRemoteApp.Signalr
+open IthoRemoteApp.ClientMessageService
 
 module log = 
     let log = Serilog.Log.Logger
@@ -116,23 +117,21 @@ let dropped
     sprintf "dropped connection %A %A %A\n" subscription reason ex.GetType   |> Fatal
     exit 1
 
-type EventStoreConnection (sp: IServiceProvider)  =
-    let _hub = sp.GetService<IHubContext<IthoHub>>()
+let mutable hub3: IHubContext<IthoHub> = null
 
+type EventStoreConnection () =
     let handlerFanstateUpdate _ (event: ResolvedEvent) =
-        let d = event.Event.Data  |> System.Text.Encoding.ASCII.GetString
-        // sprintf "new fanstates %A"  d |> Information
-        IthoRemoteApp.ClientSignalService.sendStatusFanspeed _hub d
+        let status = event.Event.Data  |> System.Text.Encoding.ASCII.GetString
+        sendToClients ("fanstates", status)
         
     let handlerStatus _ (event: ResolvedEvent) = 
         let house = match event.Event.StreamId.Split "-" with
                     | [| "$projections"; "states"; house; "result" |] -> house
                     | _ -> ""
          
-        let d = event.Event.Data  |> System.Text.Encoding.ASCII.GetString
-        IthoRemoteApp.DomainTypes.currentState <- d
-        sprintf "new status2 %s -> %A" house d |> Information
-        IthoRemoteApp.ClientSignalService.sendClientStatus _hub house d
+        let status = event.Event.Data  |> System.Text.Encoding.ASCII.GetString
+        sprintf "new status2 %s -> %A" house status |> Information
+        sendToClients ("state/" + house, status) 
 
     let rec dropped 
         (subscription:EventStoreSubscription) 
@@ -164,10 +163,6 @@ type EventStoreConnection (sp: IServiceProvider)  =
 
     let onRecoTask s e =
         sprintf "on reco" |> Information
-    //     //A
-    
-    //     //sprintf "sleep done" |> Information
-    //     initSubsription()
 
     // let onErrorTask s e =
     //     sprintf "on error \n\n%A \n\n%A" (serialize s) (serialize e) |> Information
@@ -183,7 +178,7 @@ type EventStoreConnection (sp: IServiceProvider)  =
     // let ehh4 = EventHandler<ClientErrorEventArgs> onErrorTask
 
     do 
-        "EventStoreConnection ctor" |> Information
+        sprintf "EventStoreConnection ctor" |> Information
         try
             //configureProjections
             Conn.connect(connection) |> Async.RunSynchronously
@@ -198,4 +193,3 @@ type EventStoreConnection (sp: IServiceProvider)  =
         with
             | :? Exceptions.ConnectionClosedException as ex ->
                 failwithf "Connection was closed"
-

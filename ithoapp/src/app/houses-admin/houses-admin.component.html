@@ -4,7 +4,7 @@
         <th>Time of update</th><th>Id</th><th>name</th><th>sender</th><th>fanspeed</th><th>rssi</th><th>count</th>
     </thead>
     <tbody>
-        <tr *ngFor="let fan of fanstates">
+        <tr *ngFor="let fan of houseService.fanstates">
             <td> {{ fan.time  | date: 'yyyy-MM-dd HH:mm:ss' : 'MET' }}</td>
             <td> {{ fan.id }}</td>
             <td> {{ fan.name }}</td>
@@ -12,6 +12,21 @@
             <td> {{ fan.fanspeed }}</td>
             <td>{{ fan.rssi }}</td>
             <td>{{ fan.count }}</td>
+        </tr>
+    </tbody>
+</table>
+
+<table class="table">
+    <thead>
+        <th>Receiver</th>
+        <th>Rssi</th>
+        <th>id</th>
+    </thead>
+    <tbody>
+        <tr *ngFor="let transponder of houseService.transponders.reverse()">
+            <td> {{transponder.transponder }} </td>
+            <td> {{ transponder.rssi }} </td>
+            <td> {{ transponder.id }} </td>
         </tr>
     </tbody>
 </table>

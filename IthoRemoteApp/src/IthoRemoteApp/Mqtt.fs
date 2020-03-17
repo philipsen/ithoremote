@@ -14,7 +14,7 @@ open log
 
 let node = MqttClient(brokerHostName="167.99.32.103")
 
-type MqttConnection (sp: IServiceProvider) =
+type MqttConnection () =
     let msgReceived (e:MqttMsgPublishEventArgs) =
         let m = Encoding.ASCII.GetString e.Message
         //sprintf "mqtt: received %s -> %s" e.Topic m |> Information
@@ -43,7 +43,6 @@ type MqttConnection (sp: IServiceProvider) =
 
     do 
         "MqttConnection ctor" |> Information
-        //conn.RegisterListener msgReceived
         connectNode node |> ignore
         node.MqttMsgPublishReceived.Add msgReceived
 

@@ -13,14 +13,14 @@ export class HousesAdminComponent implements OnInit {
 
   constructor(private houseService: HousesService) {
     this.houseService.startFanstateSubscription();
+    this.houseService.startTransponderSubscription();
     this.fanstates = this.houseService.fanstates;
   }
 
   ngOnInit() {
-    setInterval(() => {
-
-      this.fanstates = this.houseService.fanstates;
-    }, 1000);
+    // setInterval(() => {
+    //   this.fanstates = this.houseService.fanstates;
+    // }, 1000);
   }
 
 }

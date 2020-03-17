@@ -5,6 +5,7 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Cors.Infrastructure
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.SignalR
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe
@@ -15,6 +16,7 @@ open IthoRemoteApp.HttpHandlers
 open IthoRemoteApp.HouseService
 open IthoRemoteApp.Signalr
 open IthoRemoteApp.Mqtt
+open IthoRemoteApp.ClientMessageService
 
 // ---------------------------------
 // Web app
@@ -73,9 +75,10 @@ let configureApp (app : IApplicationBuilder) =
         endpoints.MapHub<IthoHub>(PathString("/ithoHub").ToString()) |> ignore
      ) |> ignore
     app.UseGiraffe(webAppWithLogging) |> ignore 
-
-    MqttConnection (app.ApplicationServices) |> ignore
-    MyEventStore.EventStoreConnection (app.ApplicationServices) |> ignore
+    Common.Hub <- app.ApplicationServices.GetService<IHubContext<IthoHub>>()
+    
+    MqttConnection() |> ignore
+    MyEventStore.EventStoreConnection() |> ignore
 
 
 let configureServices (services : IServiceCollection) =
@@ -84,6 +87,8 @@ let configureServices (services : IServiceCollection) =
     services.AddSignalR() |> ignore
     services.AddHouseService() |> ignore
     services.AddMqttService() |> ignore
+    services.AddClientMessageService() |> ignore
+    
 
 let configureLogging (builder : ILoggingBuilder) =
     builder.AddFilter(fun l ->  l.Equals LogLevel.Debug |> not)
