@@ -17,6 +17,7 @@ open IthoRemoteApp.HouseService
 open IthoRemoteApp.Signalr
 open IthoRemoteApp.Mqtt
 open IthoRemoteApp.ClientMessageService
+open MyEventStore
 
 // ---------------------------------
 // Web app
@@ -78,7 +79,7 @@ let configureApp (app : IApplicationBuilder) =
     Common.Hub <- app.ApplicationServices.GetService<IHubContext<IthoHub>>()
     
     InitializeMqtt() |> ignore
-    MyEventStore.EventStoreConnection() |> ignore
+    InitializeEventStoreConnection() |> ignore
 
 
 let configureServices (services : IServiceCollection) =

@@ -110,86 +110,64 @@ let houseGetStatus house =
         return s.Event    
     }
 
-let dropped
-    (subscription:EventStoreSubscription) 
-    (reason:SubscriptionDropReason) 
-    (ex:exn) =
+// let dropped
+//     (subscription:EventStoreSubscription) 
+//     (reason:SubscriptionDropReason) 
+//     (ex:exn) =
+//     sprintf "dropped connection %A %A %A\n" subscription reason ex.GetType   |> Fatal
+//     exit 1
+
+// type EventStoreConnection () =
+let handlerFanstateUpdate _ (event: ResolvedEvent) =
+    let status = event.Event.Data  |> System.Text.Encoding.ASCII.GetString
+    sendToClients ("fanstates", status)
+    
+let handlerStatus _ (event: ResolvedEvent) = 
+    let house = match event.Event.StreamId.Split "-" with
+                | [| "$projections"; "states"; house; "result" |] -> house
+                | _ -> ""
+     
+    let status = event.Event.Data  |> System.Text.Encoding.ASCII.GetString
+    sprintf "new status2 %s -> %A" house status |> Information
+    sendToClients ("state/" + house, status) 
+
+let rec dropped subscription reason ex =
     sprintf "dropped connection %A %A %A\n" subscription reason ex.GetType   |> Fatal
     exit 1
 
-let mutable hub3: IHubContext<IthoHub> = null
+let initSubsription() =
+    "initSubsription" |> Information
+    Conn.catchUp connection "status" ResolveLinks handlerStatus (Some dropped) uc |> Async.RunSynchronously |> ignore
+    Conn.catchUp connection "$projections-fanStates-result" DontResolveLinks handlerFanstateUpdate (Some dropped) uc
+    |> Async.RunSynchronously |> ignore
 
-type EventStoreConnection () =
-    let handlerFanstateUpdate _ (event: ResolvedEvent) =
-        let status = event.Event.Data  |> System.Text.Encoding.ASCII.GetString
-        sendToClients ("fanstates", status)
-        
-    let handlerStatus _ (event: ResolvedEvent) = 
-        let house = match event.Event.StreamId.Split "-" with
-                    | [| "$projections"; "states"; house; "result" |] -> house
-                    | _ -> ""
-         
-        let status = event.Event.Data  |> System.Text.Encoding.ASCII.GetString
-        sprintf "new status2 %s -> %A" house status |> Information
-        sendToClients ("state/" + house, status) 
+let onCloseTask s e =
+    sprintf "on close" |> Information
 
-    let rec dropped 
-        (subscription:EventStoreSubscription) 
-        (reason:SubscriptionDropReason) 
-        (ex:exn) =
-        try
-            sprintf "dropped connection %A %A %A\n" subscription reason ex.GetType   |> Fatal
-            exit 1
-            // Async.Sleep(5000) |> Async.RunSynchronously
-            // Information "try reconnect"
-            // let s = Conn.catchUp connection "status" ResolveLinks handlerStatus (Some dropped) uc
-            // let cts = new Threading.CancellationTokenSource()
-            // let s1 = Async.RunSynchronously // (s, 60000, cts.Token)
-            // sprintf "s = %A" s1 |> log.Warning
-        with
-        | e -> 
-            e.GetType().Name + ": " + e.Message |> sprintf "Unable to renew subscription %A"  |> Fatal
-            exit 1
-        ()
+let onRecoTask s e =
+    sprintf "on reco" |> Information
 
-    let initSubsription() =
-        "initSubsription" |> Information
-        Conn.catchUp connection "status" ResolveLinks handlerStatus (Some dropped) uc |> Async.RunSynchronously |> ignore
-        Conn.catchUp connection "$projections-fanStates-result" DontResolveLinks handlerFanstateUpdate (Some dropped) uc
-        |> Async.RunSynchronously |> ignore
+// let onErrorTask s e =
+//     sprintf "on error \n\n%A \n\n%A" (serialize s) (serialize e) |> Information
+let onConnTask s e =
+    sprintf "on conn sleep\n\n%A \n\n%A" s e |> Information
+//     // Async.Sleep(10000) |> Async.RunSynchronously
+//     // sprintf "sleep done" |> Information
+//     // initSubsription()
 
-    let onCloseTask s e =
-        sprintf "on close" |> Information
+let ehh1 = EventHandler<ClientClosedEventArgs> onCloseTask
+// let ehh2 = EventHandler<ClientReconnectingEventArgs> onRecoTask
+// let ehh3 = EventHandler<ClientConnectionEventArgs> onConnTask
+// let ehh4 = EventHandler<ClientErrorEventArgs> onErrorTask
 
-    let onRecoTask s e =
-        sprintf "on reco" |> Information
-
-    // let onErrorTask s e =
-    //     sprintf "on error \n\n%A \n\n%A" (serialize s) (serialize e) |> Information
-    let onConnTask s e =
-        sprintf "on conn sleep\n\n%A \n\n%A" s e |> Information
-    //     // Async.Sleep(10000) |> Async.RunSynchronously
-    //     // sprintf "sleep done" |> Information
-    //     // initSubsription()
-
-    let ehh1 = EventHandler<ClientClosedEventArgs> onCloseTask
-    // let ehh2 = EventHandler<ClientReconnectingEventArgs> onRecoTask
-    // let ehh3 = EventHandler<ClientConnectionEventArgs> onConnTask
-    // let ehh4 = EventHandler<ClientErrorEventArgs> onErrorTask
-
-    do 
-        sprintf "EventStoreConnection ctor" |> Information
-        try
-            //configureProjections
-            Conn.connect(connection) |> Async.RunSynchronously
-            configureMetaData connection
-            
-            connection.Closed.AddHandler (EventHandler<ClientClosedEventArgs> onCloseTask)
-            // connection.Reconnecting.AddHandler ehh2
-            // connection.Connected.AddHandler ehh3
-            // connection.ErrorOccurred.AddHandler ehh4
-            initSubsription()
-            ()
-        with
-            | :? Exceptions.ConnectionClosedException as ex ->
-                failwithf "Connection was closed"
+let InitializeEventStoreConnection() =
+    sprintf "EventStoreConnection ctor" |> Information
+    //configureProjections
+    Conn.connect(connection) |> Async.RunSynchronously
+    configureMetaData connection
+    
+    connection.Closed.AddHandler (EventHandler<ClientClosedEventArgs> onCloseTask)
+    // connection.Reconnecting.AddHandler ehh2
+    // connection.Connected.AddHandler ehh3
+    // connection.ErrorOccurred.AddHandler ehh4
+    initSubsription()
