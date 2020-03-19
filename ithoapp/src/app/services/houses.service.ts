@@ -24,6 +24,7 @@ export class HousesService implements OnInit {
   public url: string;
   public fanstates: FanState[] = [];
   transponders: Transponder[] = [];
+  public connected = false;
 
   constructor(private http: HttpClient, private configLoaderService: ConfigLoaderService) {
     this.startConnection();
@@ -41,8 +42,22 @@ export class HousesService implements OnInit {
       .build();
     this.hubConnection
       .start()
-      .then(() => console.log('Connection started'))
-      .catch(err => console.log('Error while starting connection: ' + err));
+      .then(() => {
+        console.log('Connection started');
+        this.connected = true;
+      })
+      .catch(err => {
+        console.log('Error while starting connection: ' + err);
+        this.connected = false;
+      });
+    this.hubConnection.onreconnecting(error => {
+      console.log(error);
+      this.connected = false;
+    });
+    this.hubConnection.onreconnected(() => {
+      console.log('reconnected');
+      this.connected = true;
+    });
   }
 
   public startSubscription(house: string) {
