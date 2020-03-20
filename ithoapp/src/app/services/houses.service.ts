@@ -88,7 +88,7 @@ export class HousesService implements OnInit {
 
   public startTransponderSubscription() {
     this.hubConnection.on('handheld', (data: string) => {
-      // console.log('handheld = ' + data);
+      console.log('handheld = ' + data);
       this.transponders.push(JSON.parse(data));
     });
   }

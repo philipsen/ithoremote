@@ -49,4 +49,5 @@ type HandheldRemoteMessage = {
   rssi: int
   transponder: string
   id: int list
+  time: System.DateTime
 }

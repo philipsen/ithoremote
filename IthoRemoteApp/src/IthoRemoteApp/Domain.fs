@@ -16,7 +16,7 @@ let parseControlBoxPacket (p: string) =
     rssi, pll
 
 let eventFromRemote sender (packet: string) =
-  printf "handheld remote: %s %s\n" sender packet
+  // printf "handheld remote: %s %s\n" sender packet
   let parseHex str = Int32.Parse (str,  System.Globalization.NumberStyles.HexNumber)
   let bytes = packet.Split ":"
   match bytes with
@@ -25,11 +25,12 @@ let eventFromRemote sender (packet: string) =
     let rssi = bytes.[bytes.Length-1] |> int
     match bytes.[0 .. bytes.Length-2] |> Array.toList |> List.map parseHex with
     | 0x16 :: a1 :: a2 :: a3 :: rest ->
-      printf "got match %d %d %d %A\n" a1 a2 a3 rest
+      // printf "got match %d %d %d %A\n" a1 a2 a3 rest
       let message = {
         rssi = rssi
         transponder = sender
         id = [ a1; a2; a3 ]
+        time = DateTime.Now
       }
       ClientMessageService.sendToClients ("handheld", (message |> Json.serialize))
     | _ -> failwithf "no match %A\n" bytes

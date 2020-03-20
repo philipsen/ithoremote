@@ -24,6 +24,7 @@
     </thead>
     <tbody>
         <tr *ngFor="let transponder of houseService.transponders.reverse()">
+            <td> {{ transponder.time  | date: 'yyyy-MM-dd HH:mm:ss' : 'MET'}} </td>
             <td> {{transponder.transponder }} </td>
             <td> {{ transponder.rssi }} </td>
             <td> {{ formatId(transponder.id) }} </td>
