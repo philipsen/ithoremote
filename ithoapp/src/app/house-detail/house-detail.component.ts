@@ -15,7 +15,7 @@ export class HouseDetailComponent implements OnInit {
   result: string;
 
   constructor(
-    private housesService: HousesService,
+    public housesService: HousesService,
     private route: ActivatedRoute
   ) {
     this.name = this.route.snapshot.paramMap.get('id');
