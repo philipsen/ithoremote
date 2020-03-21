@@ -4,6 +4,7 @@ open System.Text
 open uPLibrary.Networking.M2Mqtt
 open uPLibrary.Networking.M2Mqtt.Messages
 open Log
+open Microsoft.Extensions.Configuration
 
 let node = MqttClient(brokerHostName="167.99.32.103")
 
@@ -27,19 +28,15 @@ let msgReceived (mqttEvent:MqttMsgPublishEventArgs) =
 
     | [|"itho"; house; "received"; "fanspeed"|] -> 
         Domain.HouseAggregate.createIthoFanSpeedEvent house message
-        
+
     | _ -> ()
 
-let InitializeMqtt() =
-    "MqttConnection ctor" |> Information
-    let connectNode (node: MqttClient) =
-        node.Connect("fs_rec", "itho", "aapnootmies") |> ignore
-        sprintf "mtqq connection: %A" node.IsConnected |> Information
-        let topics = [| "#" |]
-        let qos = [| MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE |]
-        node.Subscribe(topics, qos) |> ignore
-        
-    connectNode node
+let InitializeMqtt(settings: IConfiguration) =
+    node.Connect("fs_rec", settings.["MqttUser"], settings.["MqttPassword"]) |> ignore
+    sprintf "mtqq connection: %A" node.IsConnected |> Information
+    let topics = [| "#" |]
+    let qos = [| MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE |]
+    node.Subscribe(topics, qos) |> ignore
     node.MqttMsgPublishReceived.Add msgReceived
 
 let publish topic payload =
