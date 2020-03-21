@@ -16,7 +16,7 @@
     <Compile Include="EventStore.fs" />
     <Compile Include="Domain.fs" />
     <Compile Include="Mqtt.fs" />
-    <Compile Include="HouseService.fs" />
+    <Compile Include="Services.fs" />
     <Compile Include="HttpHandlers.fs" />
     <Compile Include="Program.fs" />
     <None Include="web.config" />

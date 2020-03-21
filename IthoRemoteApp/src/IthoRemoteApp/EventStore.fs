@@ -20,14 +20,10 @@ let connection =
         // |> ConnectionSettings.useConsoleLogger
         |> ConnectionSettings.configureEnd (IPEndPoint.Parse "167.99.32.103:1113")
 
-let getData (e: ResolvedEvent) = 
-    e.Event.Data
-
 let getLastStateEvent () =
-    Conn.readEvent connection "$projections-states-result" (EventVersion.LastInStream) ResolveLinksStrategy.DontResolveLinks uc
+    Conn.readEvent connection "$projections-states-result" LastInStream DontResolveLinks uc
     |> Async.RunSynchronously
     
-
 let addEvent data =
     let s = serialize data |> Text.Encoding.ASCII.GetBytes
     let eventPayload = 
@@ -35,7 +31,7 @@ let addEvent data =
         |> wrapEventData
     async {
         Conn.append connection uc streamName Any [ eventPayload ] |> ignore
-    } |> Async.Start |> ignore
+    } |> Async.Start
 
 let addEventDelayed delay event =
     async {   

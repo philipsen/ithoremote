@@ -10,19 +10,24 @@ let node = MqttClient(brokerHostName="167.99.32.103")
 let msgReceived (mqttEvent:MqttMsgPublishEventArgs) =
     let message = Encoding.ASCII.GetString mqttEvent.Message
     sprintf "mqtt: received %s -> %s" mqttEvent.Topic message |> Information
+
     match mqttEvent.Topic.Split("/") with
     | [|"itho"; house; "received"; "allcb"|] -> 
         Domain.eventFromControlBoxPacket house message
+
     | [|"itho"; house; "received"; "allremotes"|] -> 
         Domain.eventFromRemote house message
+
     | [|"itho"; house; "received"; "handheld"|]
     | [|"itho"; house; "command"; "transmit"|] ->
         match message.Split("/") with
         | [| remote ; command |] ->
             Domain.createIthoTransmitRequestEvents house remote command
         | _ -> printf "unknown command ignored %s\n" message
+
     | [|"itho"; house; "received"; "fanspeed"|] -> 
-        Domain.createIthoFanSpeedEvent house message
+        Domain.HouseAggregate.createIthoFanSpeedEvent house message
+        
     | _ -> ()
 
 let InitializeMqtt() =
@@ -37,9 +42,9 @@ let InitializeMqtt() =
     connectNode node
     node.MqttMsgPublishReceived.Add msgReceived
 
-let sendCommand (house, remote, command) =
-    let topic = sprintf "itho/%s/command/transmit" house
-    let payload = sprintf "%s/%s" remote command
-    node.Publish(topic, System.Text.Encoding.ASCII.GetBytes payload) |> ignore
+let publish topic payload =
+    node.Publish(topic, payload) |> ignore
+
+
 
 

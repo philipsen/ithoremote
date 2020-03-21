@@ -4,11 +4,13 @@ open System
 open DomainTypes
 
 module Domain =
-  let createIthoFanSpeedEvent house (msg: string) =
-    {
-      house = house
-      speed = (msg |> int)
-    } |> EventStore.addEvent
+
+  module HouseAggregate = 
+    let createIthoFanSpeedEvent house (msg: string) =
+      {
+        house = house
+        speed = (msg |> int)
+      } |> EventStore.addEvent
 
 
   let eventFromRemote sender (packet: string) =
