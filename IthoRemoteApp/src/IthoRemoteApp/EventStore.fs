@@ -1,4 +1,4 @@
-﻿module MyEventStore
+﻿module IthoRemoteApp.EventStore
 
 open EventStore.ClientAPI
 open System
@@ -7,14 +7,7 @@ open System.Net
 open IthoRemoteApp.Json
 open IthoRemoteApp.ClientMessageService
 
-module log = 
-    let log = Serilog.Log.Logger
-    let Information =
-        log.Information
-    let Fatal = 
-        log.Fatal
-open log
-
+open Log
 
 let streamName = "newstream"
 let status = "$projections-states-result"

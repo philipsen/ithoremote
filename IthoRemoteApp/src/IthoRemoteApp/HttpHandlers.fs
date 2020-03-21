@@ -21,7 +21,7 @@ module HttpHandlers =
             GET >=> routef "/house/status/%s" (fun (house) ->
                 fun next context ->
                     task {
-                        let! r = MyEventStore.houseGetStatus house
+                        let! r = EventStore.houseGetStatus house
                         return! match r with 
                                 | Some r ->
                                     let d = System.Text.Encoding.ASCII.GetString r.Event.Data

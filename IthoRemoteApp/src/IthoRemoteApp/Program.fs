@@ -16,7 +16,7 @@ open IthoRemoteApp.HttpHandlers
 open IthoRemoteApp.Signalr
 open IthoRemoteApp.Mqtt
 open IthoRemoteApp.ClientMessageService
-open MyEventStore
+open IthoRemoteApp.EventStore
 
 // ---------------------------------
 // Web app

@@ -1,55 +1,45 @@
 module IthoRemoteApp.Mqtt
-open System
 open System.Text
 
 open uPLibrary.Networking.M2Mqtt
 open uPLibrary.Networking.M2Mqtt.Messages
-open Microsoft.Extensions.DependencyInjection
-
-module log = 
-    let log = Serilog.Log.Logger
-    let Information =
-        log.Information
-open log
+open Log
 
 let node = MqttClient(brokerHostName="167.99.32.103")
 
-let msgReceived (e:MqttMsgPublishEventArgs) =
-    let m = Encoding.ASCII.GetString e.Message
-    //sprintf "mqtt: received %s -> %s" e.Topic m |> Information
-    match e.Topic.Split("/") with
+let msgReceived (mqttEvent:MqttMsgPublishEventArgs) =
+    let message = Encoding.ASCII.GetString mqttEvent.Message
+    sprintf "mqtt: received %s -> %s" mqttEvent.Topic message |> Information
+    match mqttEvent.Topic.Split("/") with
     | [|"itho"; house; "received"; "allcb"|] -> 
-        Domain.eventFromControlBoxPacket house m
+        Domain.eventFromControlBoxPacket house message
     | [|"itho"; house; "received"; "allremotes"|] -> 
-        Domain.eventFromRemote house m
+        Domain.eventFromRemote house message
     | [|"itho"; house; "received"; "handheld"|]
     | [|"itho"; house; "command"; "transmit"|] ->
-        match m.Split("/") with
+        match message.Split("/") with
         | [| remote ; command |] ->
             Domain.createIthoTransmitRequestEvents house remote command
-        | _ -> printf "unknown command ignored %s\n" m
+        | _ -> printf "unknown command ignored %s\n" message
     | [|"itho"; house; "received"; "fanspeed"|] -> 
-        Domain.createIthoFanSpeedEvent house m
+        Domain.createIthoFanSpeedEvent house message
     | _ -> ()
-
-let connectNode (node: MqttClient) =
-    node.Connect("fs_rec", "itho", "aapnootmies") |> ignore
-    sprintf "mtqq connection: %A" node.IsConnected |> Information
-    let topics = [| "#" |]
-    let qos = [| MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE |]
-    let sr = node.Subscribe(topics, qos)
-    0
 
 let InitializeMqtt() =
     "MqttConnection ctor" |> Information
-    connectNode node |> ignore
+    let connectNode (node: MqttClient) =
+        node.Connect("fs_rec", "itho", "aapnootmies") |> ignore
+        sprintf "mtqq connection: %A" node.IsConnected |> Information
+        let topics = [| "#" |]
+        let qos = [| MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE |]
+        node.Subscribe(topics, qos) |> ignore
+        
+    connectNode node
     node.MqttMsgPublishReceived.Add msgReceived
 
 let sendCommand (house, remote, command) =
     let topic = sprintf "itho/%s/command/transmit" house
     let payload = sprintf "%s/%s" remote command
     node.Publish(topic, System.Text.Encoding.ASCII.GetBytes payload) |> ignore
-
-
 
 
