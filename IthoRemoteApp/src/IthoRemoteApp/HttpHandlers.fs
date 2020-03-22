@@ -12,7 +12,7 @@ module HttpHandlers =
 
             GET >=> route "/houses" >=>
                 fun next context ->
-                    let houses = HouseService.allHouses()
+                    let houses = HouseService.allHouses
                     json houses next context
             GET >=> routef "/house/status/%s" (fun (house) ->
                 fun next context ->

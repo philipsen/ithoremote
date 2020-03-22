@@ -15,40 +15,21 @@ let (|ControlBox|HandheldRemote|TransmitRequest|Fanspeed|Unknown|) (topic: strin
     | [|"itho"; house; "received"; "fanspeed"|] -> Fanspeed house
     | _ -> Unknown
 
+
 let msgReceived (mqttEvent:MqttMsgPublishEventArgs) =
     let message = Encoding.ASCII.GetString mqttEvent.Message
     sprintf "mqtt: received %s -> %s" mqttEvent.Topic message |> Information
 
     match mqttEvent.Topic with
-    | ControlBox transponder -> Domain.eventFromControlBoxPacket transponder message
-    | HandheldRemote transponder -> Domain.eventFromRemote transponder message
+    | ControlBox transponder -> Domain.ControlBoxAggregate.eventFromControlBoxPacket transponder message
+    | HandheldRemote transponder -> Domain.HandheldRemoteAggregate.eventFromRemote transponder message
     | TransmitRequest transponder ->
         match message.Split("/") with
         | [| remote ; command |] ->
-            Domain.createIthoTransmitRequestEvents transponder remote command
+            Domain.VirtualRemoteAggregate.createIthoTransmitRequestEvents transponder remote command
         | _ -> printf "unknown command ignored %s\n" message
     | Fanspeed house -> Domain.HouseAggregate.createIthoFanSpeedEvent house message
     | _ -> ()
-
-    // match mqttEvent.Topic.Split("/") with
-    // | [|"itho"; house; "received"; "allcb"|] -> 
-    //     Domain.eventFromControlBoxPacket house message
-
-    // | [|"itho"; house; "received"; "allremotes"|] -> 
-    //     Domain.eventFromRemote house message
-
-    // | [|"itho"; house; "received"; "handheld"|]
-    // | [|"itho"; house; "command"; "transmit"|] ->
-    //     match message.Split("/") with
-    //     | [| remote ; command |] ->
-    //         Domain.createIthoTransmitRequestEvents house remote command
-    //     | _ -> printf "unknown command ignored %s\n" message
-
-    // | [|"itho"; house; "received"; "fanspeed"|] -> 
-    //     Domain.HouseAggregate.createIthoFanSpeedEvent house message
-
-    // | _ -> ()
-
 
 let mutable node = null
 
