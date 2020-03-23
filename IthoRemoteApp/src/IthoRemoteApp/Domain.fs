@@ -41,10 +41,10 @@ module Domain =
       | [0x14; 0x51] -> FanspeedPacket
       | _ -> ()
 
-    let (|Wmt6|) address =
+    let (|Wmt6|Other|) address =
       match address with
       | [0x15; 0x28] -> Wmt6
-      | _ -> ()
+      | _ -> Other
 
     let eventFromControlBoxPacket sender (packet: string) =
       let packet = packet.Split ":"
@@ -54,6 +54,7 @@ module Domain =
       let id = packet.[2..3]
       let house = match id with
                   | Wmt6 -> Some "wmt6"
+                  | _ -> None
       let fanspeed = packet.[9] / 2
       match (packet.[0..1]) with
       | FanspeedPacket -> 
@@ -66,7 +67,7 @@ module Domain =
           unknown = packet.[13]
         } |> EventStore.addEvent
 
-      printf "fanspeed address = %A house = %A speed = %A\n" id house fanspeed
+      // printf "fanspeed address = %A house = %A speed = %A\n" id house fanspeed
       match house with
       | Some house -> HouseAggregate.createIthoFanSpeedEvent house (fanspeed.ToString())
       | _ -> ()

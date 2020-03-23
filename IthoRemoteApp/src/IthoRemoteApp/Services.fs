@@ -9,7 +9,7 @@ module TransponderService =
     let sendRawCommand transponder command =
         let topic = sprintf "itho/%s/command/transmitraw" transponder
         let payload = command |> List.map (fun i -> sprintf "%02x" i ) |> String.concat ":"
-        printf "c = %A\n" payload
+        // printf "c = %A\n" payload
         let payload = payload |> System.Text.Encoding.ASCII.GetBytes
         Mqtt.publish topic payload
 
@@ -44,7 +44,10 @@ module HouseService =
                 ]
                 transponder = "wmt6test"
             }
-            { name = Wmt40 ; remotes = [] ; transponder = "wmt40" }
+            { name = Wmt40 ; remotes = [
+                  { name = "main"   ; address = [ 0xff ; 0xff ; 0xff ] ; kind = Main }
+                  { name = "second" ; address = [ 0x74 ; 0xF3 ; 0xAF ] ; kind = Secondary }                
+            ] ; transponder = "wmt40" }
         ]
 
     let getHouse house = 
@@ -119,7 +122,6 @@ module HouseService =
         let counter = System.Random().Next() % 256
         let command = getCommandBytes remote.kind command
         let c = [ 0x16 ] @ remote.address @ [ counter ] @ command
-        printf "c = %A\n" c
         TransponderService.sendRawCommand transponder c 
 
 module ButtonService =         

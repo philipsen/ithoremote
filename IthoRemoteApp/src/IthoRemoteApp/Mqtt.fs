@@ -6,15 +6,11 @@ open uPLibrary.Networking.M2Mqtt.Messages
 open Log
 open Microsoft.Extensions.Configuration
 
-let (|ControlBox|HandheldRemote|TransmitRequest|Fanspeed|Unknown|) (topic: string) = 
+let (|ControlBox|HandheldRemote|Unknown|) (topic: string) = 
     match topic.Split("/") with
     | [|"itho"; transponder; "received"; "allcb"|] -> ControlBox transponder
     | [|"itho"; transponder; "received"; "allremotes"|] -> HandheldRemote transponder
-    | [|"itho"; transponder; "received"; "handheld"|]
-    | [|"itho"; transponder; "command"; "transmit"|] -> TransmitRequest transponder
-    | [|"itho"; house; "received"; "fanspeed"|] -> Fanspeed house
     | _ -> Unknown
-
 
 let msgReceived (mqttEvent:MqttMsgPublishEventArgs) =
     let message = Encoding.ASCII.GetString mqttEvent.Message
@@ -23,12 +19,6 @@ let msgReceived (mqttEvent:MqttMsgPublishEventArgs) =
     match mqttEvent.Topic with
     | ControlBox transponder -> Domain.ControlBoxAggregate.eventFromControlBoxPacket transponder message
     | HandheldRemote transponder -> Domain.HandheldRemoteAggregate.eventFromRemote transponder message
-    // | TransmitRequest transponder ->
-    //     match message.Split("/") with
-    //     | [| remote ; command |] ->
-    //         Domain.VirtualRemoteAggregate.createIthoTransmitRequestEvents transponder remote command
-    //     | _ -> printf "unknown command ignored %s\n" message
-    // | Fanspeed house -> Domain.HouseAggregate.createIthoFanSpeedEvent house message
     | _ -> ()
 
 let mutable node = null
