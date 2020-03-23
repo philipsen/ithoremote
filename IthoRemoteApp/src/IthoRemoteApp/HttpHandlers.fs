@@ -17,17 +17,22 @@ module HttpHandlers =
             GET >=> routef "/house/status/%s" (fun (house) ->
                 fun next context ->
                     task {
-                        let! r = HouseService.houseGetStatus house
+                        let! r = HouseService.getStatus house
                         return! match r with 
                                 | Some d-> text d next context
                                 | _ -> failwithf "house state not found"
                     }
             )
-            PUT >=> routef "/house/command/%s/%s" (fun (transponder, remote) -> 
+            GET >=> routef "/house/buttons/%s" (fun (house) ->
+                fun next context ->
+                    let buttons = ButtonService.getButtons house
+                    json buttons next context
+            )
+            PUT >=> routef "/house/command/%s/%s" (fun (house, remote) -> 
                 fun next context ->
                     task {
                        let! command = context.ReadBodyFromRequestAsync()
-                       TransponderService.sendCommand (transponder, remote, command)
+                       HouseService.sendCommand house remote command
                        return! text "" next context
                     }
             )

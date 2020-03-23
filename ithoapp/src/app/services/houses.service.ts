@@ -102,13 +102,15 @@ export class HousesService implements OnInit {
     return this.http.get<House>(url);
   }
 
-  getButtons(id: String): IthoButton[] {
-    let b = Wmt6Buttons;
-    switch (id) {
-      case 'wmt40':
-        b = Wmt40Buttons;
-    }
-    return b;
+  getButtons(id: String): Observable<IthoButton[]> {
+    const url = this.configLoaderService.apiUrl + '/api/house/buttons/' + id;
+    return this.http.get<IthoButton[]>(url);
+    // let b = Wmt6Buttons;
+    // switch (id) {
+    //   case 'wmt40':
+    //     b = Wmt40Buttons;
+    // }
+    // return b;
   }
 
 }

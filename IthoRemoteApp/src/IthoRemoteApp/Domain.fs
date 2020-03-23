@@ -7,6 +7,7 @@ module Domain =
 
   module HouseAggregate = 
     let createIthoFanSpeedEvent house (msg: string) =
+      // printf "create fs %s %s\n" house msg
       {
         house = house
         speed = (msg |> int)
@@ -14,7 +15,7 @@ module Domain =
 
   module HandheldRemoteAggregate =
     let eventFromRemote sender (packet: string) =
-      // printf "handheld remote: %s %s\n" sender packet
+      printf "handheld remote: %s %s\n" sender packet
       let parseHex str = Int32.Parse (str,  Globalization.NumberStyles.HexNumber)
       let bytes = packet.Split ":"
       match bytes with
@@ -53,6 +54,7 @@ module Domain =
       let id = packet.[2..3]
       let house = match id with
                   | Wmt6 -> Some "wmt6"
+      let fanspeed = packet.[9] / 2
       match (packet.[0..1]) with
       | FanspeedPacket -> 
         {
@@ -60,9 +62,14 @@ module Domain =
           id = id
           house = house
           rssi = rssi
-          fanspeed = packet.[9] / 2
+          fanspeed = fanspeed
           unknown = packet.[13]
         } |> EventStore.addEvent
+
+      printf "fanspeed address = %A house = %A speed = %A\n" id house fanspeed
+      match house with
+      | Some house -> HouseAggregate.createIthoFanSpeedEvent house (fanspeed.ToString())
+      | _ -> ()
 
   module VirtualRemoteAggregate = 
 

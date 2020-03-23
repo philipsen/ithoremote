@@ -18,17 +18,17 @@ let (|ControlBox|HandheldRemote|TransmitRequest|Fanspeed|Unknown|) (topic: strin
 
 let msgReceived (mqttEvent:MqttMsgPublishEventArgs) =
     let message = Encoding.ASCII.GetString mqttEvent.Message
-    sprintf "mqtt: received %s -> %s" mqttEvent.Topic message |> Information
+    // sprintf "mqtt: received %s -> %s" mqttEvent.Topic message |> Information
 
     match mqttEvent.Topic with
     | ControlBox transponder -> Domain.ControlBoxAggregate.eventFromControlBoxPacket transponder message
     | HandheldRemote transponder -> Domain.HandheldRemoteAggregate.eventFromRemote transponder message
-    | TransmitRequest transponder ->
-        match message.Split("/") with
-        | [| remote ; command |] ->
-            Domain.VirtualRemoteAggregate.createIthoTransmitRequestEvents transponder remote command
-        | _ -> printf "unknown command ignored %s\n" message
-    | Fanspeed house -> Domain.HouseAggregate.createIthoFanSpeedEvent house message
+    // | TransmitRequest transponder ->
+    //     match message.Split("/") with
+    //     | [| remote ; command |] ->
+    //         Domain.VirtualRemoteAggregate.createIthoTransmitRequestEvents transponder remote command
+    //     | _ -> printf "unknown command ignored %s\n" message
+    // | Fanspeed house -> Domain.HouseAggregate.createIthoFanSpeedEvent house message
     | _ -> ()
 
 let mutable node = null

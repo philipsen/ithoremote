@@ -75,8 +75,13 @@ export class HouseDetailComponent implements OnInit {
 
   getButtons(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    this.buttons = this.housesService.getButtons(id);
-  }
+    this.housesService.getButtons(id)
+      .subscribe(buttons => {
+        console.log (buttons);
+        this.buttons = buttons;
+      },
+      error => console.log('error = ' + error.statusText + ' ' + error.status));
+    }
 
   statusLabel(): string {
     if (this.housesService.connected) {
