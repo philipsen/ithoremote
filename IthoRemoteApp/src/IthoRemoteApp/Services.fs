@@ -26,7 +26,7 @@ module HouseService =
         kind: HandheldType
     }
 
-    type HouseId = Wmt6 | Wmt40
+    type HouseId = Wmt6 | Wmt10 | Wmt40
 
     type House = {
         name: HouseId
@@ -43,12 +43,30 @@ module HouseService =
                   { name = "second" ; address = [ 0x74 ; 0xF3 ; 0xAF ] ; kind = Secondary }
                 ]
                 transponder = "wmt6test"
+            }            
+            { 
+                name = Wmt10 ; 
+                remotes = [
+                  { name = "main"   ; address = [ 0x00 ; 0x0 ; 0x0 ] ; kind = Main }
+                ]
+                transponder = "wmt6test"
             }
             { name = Wmt40 ; remotes = [
                   { name = "main"   ; address = [ 0xff ; 0xff ; 0xff ] ; kind = Main }
                   { name = "second" ; address = [ 0x74 ; 0xF3 ; 0xAF ] ; kind = Secondary }                
             ] ; transponder = "wmt40" }
         ]
+
+    let getHouseForHandheldRemote transponder address =
+        let tranponderMatch house = house.transponder = transponder
+        let getRemotes house = house.remotes
+        let addressMatch remote = remote.address = address
+        let remotes = 
+            allHouses |> List.filter tranponderMatch 
+                      |> List.collect getRemotes 
+                      |> List.tryFind addressMatch
+        
+        ignore
 
     let getHouse house = 
         allHouses |> List.find (fun e -> e.name = house)
@@ -60,6 +78,7 @@ module HouseService =
     let stringTohouse house = 
         match house with
         | "wmt6" -> Wmt6
+        | "wmt10" -> Wmt10
         | "wmt40" -> Wmt40
         | _ -> failwith "no transponder for this house"
 
@@ -114,7 +133,7 @@ module HouseService =
         command.bytes
 
     let sendCommand house remote command =
-        Domain.VirtualRemoteAggregate.createIthoTransmitRequestEvents house remote command
+        Domain.HouseAggregate.createIthoTransmitRequestEvents house remote command
 
         let house = stringTohouse house
         let transponder:string = getTransponderForHouse house
@@ -141,6 +160,14 @@ module ButtonService =
         { label = "WC auto";           remoteId = "second"; remoteCommand = "s_auto"}
     ]
 
+    let wmt10Buttons = [      
+        { label = "Eco" ;              remoteId = "main" ;  remoteCommand = "eco"}
+        { label = "Comfort" ;          remoteId = "main";   remoteCommand = "comfort"}
+        { label = "Keuken 30 min";     remoteId = "main";   remoteCommand = "cook1"}
+        { label = "Keuken 60 min";     remoteId = "main";   remoteCommand = "cook2"}
+        { label = "Maximaal 30 min";   remoteId = "main";   remoteCommand = "timer1"}
+    ]
+
     let wmt40Buttons = [
         { label = "Eco" ;           remoteId = "main" ; remoteCommand = "eco"}
         { label = "Comfort" ;       remoteId = "main" ; remoteCommand = "comfort"}
@@ -153,5 +180,6 @@ module ButtonService =
     let getButtons house =
         match house with
         | "wmt6" -> wmt6Buttons
+        | "wmt10" -> wmt10Buttons
         | "wmt40" -> wmt40Buttons
         | _  -> failwith "no buttons defined"
