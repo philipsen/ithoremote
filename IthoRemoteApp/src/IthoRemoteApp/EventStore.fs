@@ -49,7 +49,7 @@ let configureMetaData connection =
     Information "configureMetaData"
     let metaData = 
         StreamMetadata.Build()
-         .SetMaxCount(15L)
+         .SetMaxCount(150L)
          .Build()
     [
         "newstream"

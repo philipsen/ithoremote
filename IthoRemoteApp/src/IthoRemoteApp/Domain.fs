@@ -35,72 +35,13 @@ module Domain =
       } |> EventStore.addEvent
 
       let delay = delayForCommand command
-      {
-        house = house
-        remote = remote
-        cancelCommand = command
-        correlationId = correlationId
-      } |> EventStore.addEventDelayed delay
-
-  module HandheldRemoteAggregate =
-    let eventFromRemote sender (packet: string) =
-      printf "handheld remote: %s %s\n" sender packet
-      let parseHex str = Int32.Parse (str,  Globalization.NumberStyles.HexNumber)
-      let bytes = packet.Split ":"
-      match bytes with
-      | [| |] -> failwithf "no match %A\n" bytes
-      | _ ->
-        let rssi = bytes.[bytes.Length-1] |> int
-        match bytes.[0 .. bytes.Length-2] |> Array.toList |> List.map parseHex with
-        | 0x16 :: a1 :: a2 :: a3 :: rest ->
-          printf "got match %d %d %d %A\n" a1 a2 a3 rest
-          let message = {
-            rssi = rssi
-            transponder = sender
-            id = [ a1; a2; a3 ]
-            time = DateTime.Now
-          }
-          ClientMessageService.sendToClients ("handheld", (message |> Json.serialize))
-        | _ -> failwithf "no match %A\n" bytes
-
-  module ControlBoxAggregate = 
-
-    let (|FanspeedPacket|) packet =
-      match packet with
-      | [0x14; 0x51] -> FanspeedPacket
-      | _ -> ()
-
-    let (|Wmt6|Wmt10|Other|) address =
-      match address with
-      | [0x15; 0x28] -> Wmt6
-      | [0x10; 0x45] -> Wmt10
-      | _ -> Other
-
-    let eventFromControlBoxPacket sender (packet: string) =
-      let packet = packet.Split ":"
-      let rssi = packet |> Array.last |> int
-      let packet = packet.[.. packet.Length-2] |> Array.toList |> List.map ((sprintf "0x%s") >> int)
-      
-      let id = packet.[2..3]
-      let house = match id with
-                  | Wmt6 -> Some "wmt6"
-                  | Wmt10 -> Some "wmt10"
-                  | _ -> None
-      let fanspeed = packet.[9] / 2
-      match (packet.[0..1]) with
-      | FanspeedPacket -> 
+      match delay with
+      | 0 -> ()
+      | delay ->
         {
-          sender = sender
-          id = id
           house = house
-          rssi = rssi
-          fanspeed = fanspeed
-          unknown = packet.[13]
-        } |> EventStore.addEvent
+          remote = remote
+          cancelCommand = command
+          correlationId = correlationId
+        } |> EventStore.addEventDelayed delay
 
-      printf "fanspeed address = %A house = %A speed = %A\n" id house fanspeed
-      match house with
-      | Some house -> HouseAggregate.createIthoFanSpeedEvent house (fanspeed.ToString())
-      | _ -> ()
-
-  // module VirtualRemoteAggregate = 

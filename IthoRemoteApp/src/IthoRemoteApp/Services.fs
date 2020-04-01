@@ -1,18 +1,12 @@
 namespace IthoRemoteApp
     
-module TransponderService =
-    let sendCommand transponder remote command =
-        let topic = sprintf "itho/%s/command/transmit" transponder
-        let payload = sprintf "%s/%s" remote command |> System.Text.Encoding.ASCII.GetBytes
-        Mqtt.publish topic payload
+open System
+open System.Text
+open uPLibrary.Networking.M2Mqtt.Messages
+open Mqtt
 
-    let sendRawCommand transponder command =
-        let topic = sprintf "itho/%s/command/transmitraw" transponder
-        let payload = command |> List.map (fun i -> sprintf "%02x" i ) |> String.concat ":"
-        // printf "c = %A\n" payload
-        let payload = payload |> System.Text.Encoding.ASCII.GetBytes
-        Mqtt.publish topic payload
-
+open Log
+open DomainTypes
 
 module HouseService =
 
@@ -27,6 +21,12 @@ module HouseService =
     }
 
     type HouseId = Wmt6 | Wmt10 | Wmt40
+
+    let houseIdToString id =
+        match id with
+        | Wmt6 -> "wmt6"
+        | Wmt10 -> "wmt10"
+        | _ -> ""
 
     type House = {
         name: HouseId
@@ -60,13 +60,18 @@ module HouseService =
     let getHouseForHandheldRemote transponder address =
         let tranponderMatch house = house.transponder = transponder
         let getRemotes house = house.remotes
-        let addressMatch remote = remote.address = address
+        let addressMatch house = 
+            let remotes = house.remotes
+            List.exists (fun r -> r.address = address) remotes
         let remotes = 
-            allHouses |> List.filter tranponderMatch 
-                      |> List.collect getRemotes 
+            let house = allHouses |> List.filter tranponderMatch 
                       |> List.tryFind addressMatch
-        
-        ignore
+            match house with 
+            | Some house -> 
+                let remote = house.remotes |> List.find (fun remote -> remote.address = address)
+                house, remote
+            | _ -> failwithf "unhandled remote %A" address
+        remotes
 
     let getHouse house = 
         allHouses |> List.find (fun e -> e.name = house)
@@ -134,14 +139,90 @@ module HouseService =
 
     let sendCommand house remote command =
         Domain.HouseAggregate.createIthoTransmitRequestEvents house remote command
-
         let house = stringTohouse house
-        let transponder:string = getTransponderForHouse house
+        let transponder = getTransponderForHouse house
         let remote = getHouseRemote house remote
-        let counter = System.Random().Next() % 256
+        let counter = Random().Next() % 256
         let command = getCommandBytes remote.kind command
         let c = [ 0x16 ] @ remote.address @ [ counter ] @ command
         TransponderService.sendRawCommand transponder c 
+
+module HandheldRemoteService =
+
+    let eventFromRemote sender (packet: string) =
+      printf "handheld remote: %s %s\n" sender packet
+      let bytes = packet.Split ":"
+      match bytes with
+      | [| |] -> failwithf "no match %A\n" bytes
+      | _ ->
+        let rssi = bytes.[bytes.Length-1] |> int
+        let message = bytes.[0 .. bytes.Length-2]
+        let parseHex str = Int32.Parse (str,  Globalization.NumberStyles.HexNumber)
+
+        match message |> Array.toList |> List.map parseHex with
+        | 0x16 :: a1 :: a2 :: a3 :: rest ->
+          // printf "got match %d %d %d %A\n" a1 a2 a3 rest
+          let message = {
+            rssi = rssi
+            transponder = sender
+            id = [ a1; a2; a3 ]
+            time = DateTime.Now
+          }
+          ClientMessageService.sendToClients ("handheld", (message |> Json.serialize))
+          let (house, remote) = HouseService.getHouseForHandheldRemote message.transponder message.id 
+          let command = rest.[1 .. (rest.Length-2)]
+          let command = (HouseService.AllCommands |> List.find (fun r -> r.kind = remote.kind)).commands 
+                      |> List.find (fun c -> c.bytes = command)
+          // printf "c = %A\n" c2          
+          printf "got hr = %A %A %s %s\n" house.name remote.kind remote.name command.name
+          Domain.HouseAggregate.createIthoTransmitRequestEvents (HouseService.houseIdToString house.name) remote.name command.name
+
+        | _ -> failwithf "no match %A\n" bytes        
+
+module ControlBoxService = 
+
+    let (|FanspeedPacket|) packet =
+      match packet with
+      | [0x14; 0x51] -> FanspeedPacket
+      | _ -> ()
+
+    let (|Wmt6|Wmt10|Other|) address =
+      match address with
+      | [0x15; 0x28] -> Wmt6
+      | [0x10; 0x45] -> Wmt10
+      | _ -> Other
+
+
+
+    let eventFromControlBoxPacket sender (packet: string) =
+      let packet = packet.Split ":"
+      match packet.Length with
+      | 17 -> 
+          let rssi = packet |> Array.last |> int
+          let packet = packet.[.. packet.Length-2] |> Array.toList |> List.map ((sprintf "0x%s") >> int)
+          
+          let id = packet.[2..3]
+          let house = match id with
+                      | Wmt6 -> Some "wmt6"
+                      | Wmt10 -> Some "wmt10"
+                      | _ -> None
+          let fanspeed = packet.[9] / 2
+          match (packet.[0..1]) with
+          | FanspeedPacket -> 
+            {
+              sender = sender
+              id = id
+              house = house
+              rssi = rssi
+              fanspeed = fanspeed
+              unknown = packet.[13]
+            } |> EventStore.addEvent
+        | _ -> sprintf "unexpected packet length %d (p = %A)" packet.Length packet |> Information
+
+      // printf "fanspeed address = %A house = %A speed = %A\n" id house fanspeed
+    //   match house with
+    //   | Some house -> HouseAggregate.createIthoFanSpeedEvent house (fanspeed.ToString())
+    //   | _ -> ()
 
 module ButtonService =         
     type IthoButton = {
@@ -183,3 +264,16 @@ module ButtonService =
         | "wmt10" -> wmt10Buttons
         | "wmt40" -> wmt40Buttons
         | _  -> failwith "no buttons defined"
+
+
+module MqttService =
+  let msgReceived (mqttEvent:MqttMsgPublishEventArgs) =
+      let message = Encoding.ASCII.GetString mqttEvent.Message
+      sprintf "mqtt: received %s -> %s" mqttEvent.Topic message |> Information
+
+      match mqttEvent.Topic with
+      | ControlBox transponder -> 
+          ControlBoxService.eventFromControlBoxPacket transponder message
+      | HandheldRemote transponder -> 
+          HandheldRemoteService.eventFromRemote transponder message
+      | _ -> ()

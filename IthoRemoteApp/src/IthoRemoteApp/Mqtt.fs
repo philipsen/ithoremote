@@ -1,39 +1,30 @@
-module IthoRemoteApp.Mqtt
-open System.Text
-
+namespace IthoRemoteApp
 open uPLibrary.Networking.M2Mqtt
 open uPLibrary.Networking.M2Mqtt.Messages
-open Log
 open Microsoft.Extensions.Configuration
+open Log
 
-let (|ControlBox|HandheldRemote|Unknown|) (topic: string) = 
-    match topic.Split("/") with
-    | [|"itho"; transponder; "received"; "allcb"|] -> ControlBox transponder
-    | [|"itho"; transponder; "received"; "allremotes"|] -> HandheldRemote transponder
-    | _ -> Unknown
+module Mqtt =
 
-let msgReceived (mqttEvent:MqttMsgPublishEventArgs) =
-    let message = Encoding.ASCII.GetString mqttEvent.Message
-    // sprintf "mqtt: received %s -> %s" mqttEvent.Topic message |> Information
+    let (|ControlBox|HandheldRemote|Unknown|) (topic: string) = 
+        match topic.Split("/") with
+        | [|"itho"; transponder; "received"; "allcb"|] -> ControlBox transponder
+        | [|"itho"; transponder; "received"; "allremotes"|] -> HandheldRemote transponder
+        | _ -> Unknown
 
-    match mqttEvent.Topic with
-    | ControlBox transponder -> Domain.ControlBoxAggregate.eventFromControlBoxPacket transponder message
-    | HandheldRemote transponder -> Domain.HandheldRemoteAggregate.eventFromRemote transponder message
-    | _ -> ()
+    let mutable node = null
 
-let mutable node = null
+    let InitializeMqtt(settings: IConfiguration) msgReceived =
+        node <- MqttClient(settings.["MqttHost"])
+        node.Connect("fs_rec", settings.["MqttUser"], settings.["MqttPassword"]) |> ignore
+        sprintf "mtqq connection: %A" node.IsConnected |> Information
+        let topics = [| "#" |]
+        let qos = [| MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE |]
+        node.Subscribe(topics, qos) |> ignore
+        node.MqttMsgPublishReceived.Add msgReceived
 
-let InitializeMqtt(settings: IConfiguration) =
-    node <- MqttClient(settings.["MqttHost"])
-    node.Connect("fs_rec", settings.["MqttUser"], settings.["MqttPassword"]) |> ignore
-    sprintf "mtqq connection: %A" node.IsConnected |> Information
-    let topics = [| "#" |]
-    let qos = [| MqttMsgBase.QOS_LEVEL_AT_MOST_ONCE |]
-    node.Subscribe(topics, qos) |> ignore
-    node.MqttMsgPublishReceived.Add msgReceived
-
-let publish topic payload =
-    node.Publish(topic, payload) |> ignore
+    let publish topic payload =
+        node.Publish(topic, payload) |> ignore
 
 
 
