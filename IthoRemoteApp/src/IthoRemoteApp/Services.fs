@@ -41,6 +41,7 @@ module HouseService =
                 remotes = [
                   { name = "main"   ; address = [ 0x52 ; 0x50 ; 0xB9 ] ; kind = Main }
                   { name = "second" ; address = [ 0x74 ; 0xF3 ; 0xAF ] ; kind = Secondary }
+                  { name = "fake" ;   address = [ 0x00 ; 0x00 ; 0x09 ] ; kind = Secondary }
                 ]
                 transponder = "wmt6test"
             }            
@@ -59,18 +60,16 @@ module HouseService =
 
     let getHouseForHandheldRemote transponder address =
         let tranponderMatch house = house.transponder = transponder
-        let getRemotes house = house.remotes
-        let addressMatch house = 
-            let remotes = house.remotes
-            List.exists (fun r -> r.address = address) remotes
+        let addressMatch house = house.remotes |> List.exists (fun r -> r.address = address)
         let remotes = 
-            let house = allHouses |> List.filter tranponderMatch 
-                      |> List.tryFind addressMatch
+            let house = allHouses |> List.filter tranponderMatch |> List.tryFind addressMatch
             match house with 
             | Some house -> 
                 let remote = house.remotes |> List.find (fun remote -> remote.address = address)
-                house, remote
-            | _ -> failwithf "unhandled remote %A" address
+                Some house, Some remote
+            | _ -> 
+                sprintf "unhandled remote %A" address |> Error
+                (None, None)
         remotes
 
     let getHouse house = 
@@ -161,7 +160,6 @@ module HandheldRemoteService =
 
         match message |> Array.toList |> List.map parseHex with
         | 0x16 :: a1 :: a2 :: a3 :: rest ->
-          // printf "got match %d %d %d %A\n" a1 a2 a3 rest
           let message = {
             rssi = rssi
             transponder = sender
@@ -169,30 +167,30 @@ module HandheldRemoteService =
             time = DateTime.Now
           }
           ClientMessageService.sendToClients ("handheld", (message |> Json.serialize))
-          let (house, remote) = HouseService.getHouseForHandheldRemote message.transponder message.id 
-          let command = rest.[1 .. (rest.Length-2)]
-          let command = (HouseService.AllCommands |> List.find (fun r -> r.kind = remote.kind)).commands 
-                      |> List.find (fun c -> c.bytes = command)
-          // printf "c = %A\n" c2          
-          printf "got hr = %A %A %s %s\n" house.name remote.kind remote.name command.name
-          Domain.HouseAggregate.createIthoTransmitRequestEvents (HouseService.houseIdToString house.name) remote.name command.name
+          let remotes = HouseService.getHouseForHandheldRemote message.transponder message.id
+          match remotes with
+          | (Some house, Some remote)  ->
+            let command = rest.[1 .. (rest.Length-2)]
+            let command = (HouseService.AllCommands |> List.find (fun r -> r.kind = remote.kind)).commands 
+                          |> List.find (fun c -> c.bytes = command)
+            // printf "got hr = %A %A %s %s\n" house.name remote.kind remote.name command.name
+            Domain.HouseAggregate.createIthoTransmitRequestEvents (HouseService.houseIdToString house.name) remote.name command.name
+          | _ -> sprintf "handheld for unknown house / remote" |> log.Warning
 
         | _ -> failwithf "no match %A\n" bytes        
 
 module ControlBoxService = 
 
-    let (|FanspeedPacket|) packet =
-      match packet with
+    let (|FanspeedPacket|) packetIdentifier =
+      match packetIdentifier with
       | [0x14; 0x51] -> FanspeedPacket
       | _ -> ()
 
-    let (|Wmt6|Wmt10|Other|) address =
-      match address with
+    let (|Wmt6|Wmt10|Other|) controlBoxAddress =
+      match controlBoxAddress with
       | [0x15; 0x28] -> Wmt6
       | [0x10; 0x45] -> Wmt10
       | _ -> Other
-
-
 
     let eventFromControlBoxPacket sender (packet: string) =
       let packet = packet.Split ":"
@@ -200,15 +198,14 @@ module ControlBoxService =
       | 17 -> 
           let rssi = packet |> Array.last |> int
           let packet = packet.[.. packet.Length-2] |> Array.toList |> List.map ((sprintf "0x%s") >> int)
-          
-          let id = packet.[2..3]
-          let house = match id with
-                      | Wmt6 -> Some "wmt6"
-                      | Wmt10 -> Some "wmt10"
-                      | _ -> None
-          let fanspeed = packet.[9] / 2
           match (packet.[0..1]) with
           | FanspeedPacket -> 
+            let id = packet.[2..3]
+            let house = match id with
+                        | Wmt6 -> Some "wmt6"
+                        | Wmt10 -> Some "wmt10"
+                        | _ -> None
+            let fanspeed = packet.[9] / 2
             {
               sender = sender
               id = id
@@ -217,12 +214,13 @@ module ControlBoxService =
               fanspeed = fanspeed
               unknown = packet.[13]
             } |> EventStore.addEvent
+            // printf "fanspeed address = %A house = %A speed = %A\n" id house fanspeed
+            match house with
+            | Some house -> Domain.HouseAggregate.createIthoFanSpeedEvent house (fanspeed.ToString())
+            | _ -> ()
+
         | _ -> sprintf "unexpected packet length %d (p = %A)" packet.Length packet |> Information
 
-      // printf "fanspeed address = %A house = %A speed = %A\n" id house fanspeed
-    //   match house with
-    //   | Some house -> HouseAggregate.createIthoFanSpeedEvent house (fanspeed.ToString())
-    //   | _ -> ()
 
 module ButtonService =         
     type IthoButton = {
