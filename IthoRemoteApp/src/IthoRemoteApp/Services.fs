@@ -68,7 +68,7 @@ module HouseService =
                 let remote = house.remotes |> List.find (fun remote -> remote.address = address)
                 Some house, Some remote
             | _ -> 
-                sprintf "unhandled remote %A" address |> Error
+                sprintf "unhandled remote %A" address |> log.Error
                 (None, None)
         remotes
 
