@@ -8,14 +8,16 @@
     <ProjectReference Include="..\EventStoreWrapper\EventStoreWrapper.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Log.fs" />
     <Compile Include="Json.fs" />
     <Compile Include="Domain.Types.fs" />
     <Compile Include="Signalr.fs" /> 
     <Compile Include="ClientMessageService.fs" />
+    <Compile Include="Mqtt.fs" />
     <Compile Include="EventStore.fs" />
     <Compile Include="Domain.fs" />
-    <Compile Include="Mqtt.fs" />
-    <Compile Include="HouseService.fs" />
+    <Compile Include="TransponderService.fs" />
+    <Compile Include="Services.fs" />
     <Compile Include="HttpHandlers.fs" />
     <Compile Include="Program.fs" />
     <None Include="web.config" />
@@ -29,5 +31,7 @@
     <PackageReference Include="Serilog" Version="2.9.0" />
     <PackageReference Include="Serilog.Sinks.Literate" Version="3.0.0" />
     <PackageReference Include="TaskBuilder.fs" Version="2.1.*" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.0.1" /> 
   </ItemGroup>
+
 </Project>

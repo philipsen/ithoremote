@@ -16,7 +16,8 @@ open IthoRemoteApp.HttpHandlers
 open IthoRemoteApp.Signalr
 open IthoRemoteApp.Mqtt
 open IthoRemoteApp.ClientMessageService
-open MyEventStore
+open IthoRemoteApp.EventStore
+open Microsoft.Extensions.Configuration
 
 // ---------------------------------
 // Web app
@@ -77,9 +78,8 @@ let configureApp (app : IApplicationBuilder) =
     app.UseGiraffe(webAppWithLogging) |> ignore 
     Common.Hub <- app.ApplicationServices.GetService<IHubContext<IthoHub>>()
     
-    InitializeMqtt() |> ignore
+    InitializeMqtt (app.ApplicationServices.GetService<IConfiguration>()) MqttService.msgReceived |> ignore
     InitializeEventStoreConnection() |> ignore
-
 
 let configureServices (services : IServiceCollection) =
     services.AddCors()    |> ignore
@@ -91,11 +91,19 @@ let configureServices (services : IServiceCollection) =
 //            .AddConsole()
 //            .AddDebug() |> ignore
 
+let configureAppConfiguration  (context: WebHostBuilderContext) (config: IConfigurationBuilder) =  
+    config
+        .AddJsonFile("appsettings.json",false,true)
+        .AddJsonFile(sprintf "appsettings.%s.json" context.HostingEnvironment.EnvironmentName ,true)
+        .AddEnvironmentVariables() |> ignore
+
+        
 [<EntryPoint>]
 let main _ =
     WebHostBuilder()
         .UseKestrel()
-        .UseIISIntegration()
+        .UseIISIntegration()        
+        .ConfigureAppConfiguration(configureAppConfiguration)
         .Configure(Action<IApplicationBuilder> configureApp)
         .ConfigureServices(configureServices)
         .Build()

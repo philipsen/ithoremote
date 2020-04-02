@@ -1,6 +1,6 @@
 <h2>All houses connected</h2>
 <ul>
-  <li *ngFor="let house of houses" routerLink="/house/{{house.name}}">{{house.name}}</li>
+  <li *ngFor="let house of houses" routerLink="/house/{{house.name.case | lowercase}}">{{house.name.case | lowercase}}</li>
 </ul>
 
 

@@ -1,4 +1,4 @@
-﻿module MyEventStore
+﻿module IthoRemoteApp.EventStore
 
 open EventStore.ClientAPI
 open System
@@ -7,14 +7,7 @@ open System.Net
 open IthoRemoteApp.Json
 open IthoRemoteApp.ClientMessageService
 
-module log = 
-    let log = Serilog.Log.Logger
-    let Information =
-        log.Information
-    let Fatal = 
-        log.Fatal
-open log
-
+open Log
 
 let streamName = "newstream"
 let status = "$projections-states-result"
@@ -27,14 +20,10 @@ let connection =
         // |> ConnectionSettings.useConsoleLogger
         |> ConnectionSettings.configureEnd (IPEndPoint.Parse "167.99.32.103:1113")
 
-let getData (e: ResolvedEvent) = 
-    e.Event.Data
-
 let getLastStateEvent () =
-    Conn.readEvent connection "$projections-states-result" (EventVersion.LastInStream) ResolveLinksStrategy.DontResolveLinks uc
+    Conn.readEvent connection "$projections-states-result" LastInStream DontResolveLinks uc
     |> Async.RunSynchronously
     
-
 let addEvent data =
     let s = serialize data |> Text.Encoding.ASCII.GetBytes
     let eventPayload = 
@@ -42,7 +31,7 @@ let addEvent data =
         |> wrapEventData
     async {
         Conn.append connection uc streamName Any [ eventPayload ] |> ignore
-    } |> Async.Start |> ignore
+    } |> Async.Start
 
 let addEventDelayed delay event =
     async {   
@@ -60,7 +49,7 @@ let configureMetaData connection =
     Information "configureMetaData"
     let metaData = 
         StreamMetadata.Build()
-         .SetMaxCount(15L)
+         .SetMaxCount(150L)
          .Build()
     [
         "newstream"
