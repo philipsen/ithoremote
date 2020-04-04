@@ -8,6 +8,64 @@ open Mqtt
 open Log
 open DomainTypes
 
+
+module MqttSenderService =       
+    let sendCommand transponder remote command =
+        let topic = sprintf "itho/%s/command/transmit" transponder
+        let payload = sprintf "%s/%s" remote command |> System.Text.Encoding.ASCII.GetBytes
+        Mqtt.publish topic payload
+
+    let sendRawCommand transponder command =
+        let topic = sprintf "itho/%s/command/transmitraw" transponder
+        let payload = command |> List.map (fun i -> sprintf "%02x" i ) |> String.concat ":"
+        // printf "c = %A\n" payload
+        let payload = payload |> System.Text.Encoding.ASCII.GetBytes
+        Mqtt.publish topic payload
+
+module ControlBoxService = 
+
+    let (|FanspeedPacket|) packetIdentifier =
+      match packetIdentifier with
+      | [0x14; 0x51] -> FanspeedPacket
+      | _ -> ()
+
+    let (|Wmt6|Wmt10|Other|) controlBoxAddress =
+      match controlBoxAddress with
+      | [0x15; 0x28] -> Wmt6
+      | [0x10; 0x45] -> Wmt10
+      | _ -> Other
+
+    let eventFromControlBoxPacket sender (packet: string) =
+      let packet = packet.Split ":"
+      match packet.Length with
+      | 17 -> 
+          let rssi = packet |> Array.last |> int
+          let packet = packet.[.. packet.Length-2] |> Array.toList |> List.map ((sprintf "0x%s") >> int)
+          match (packet.[0..1]) with
+          | FanspeedPacket -> 
+            let id = packet.[2..3]
+            let house = match id with
+                        | Wmt6 -> Some "wmt6"
+                        | Wmt10 -> Some "wmt10"
+                        | _ -> None
+            let fanspeed = packet.[9] / 2
+            {
+              sender = sender
+              id = id
+              house = house
+              rssi = rssi
+              fanspeed = fanspeed
+              unknown = packet.[13]
+            } |> EventStore.addEvent
+            // printf "fanspeed address = %A house = %A speed = %A\n" id house fanspeed
+            match house with
+            | Some house -> Domain.HouseAggregate.createIthoFanSpeedEvent house (fanspeed.ToString())
+            | _ -> ()
+
+        | _ -> sprintf "unexpected packet length %d (p = %A)" packet.Length packet |> Information
+
+
+
 module HouseService =
 
     type HandheldAddres = int list
@@ -144,7 +202,7 @@ module HouseService =
         let counter = Random().Next() % 256
         let command = getCommandBytes remote.kind command
         let c = [ 0x16 ] @ remote.address @ [ counter ] @ command
-        TransponderService.sendRawCommand transponder c 
+        MqttSenderService.sendRawCommand transponder c 
 
 module HandheldRemoteService =
 
@@ -178,49 +236,6 @@ module HandheldRemoteService =
           | _ -> sprintf "handheld for unknown house / remote" |> log.Warning
 
         | _ -> failwithf "no match %A\n" bytes        
-
-module ControlBoxService = 
-
-    let (|FanspeedPacket|) packetIdentifier =
-      match packetIdentifier with
-      | [0x14; 0x51] -> FanspeedPacket
-      | _ -> ()
-
-    let (|Wmt6|Wmt10|Other|) controlBoxAddress =
-      match controlBoxAddress with
-      | [0x15; 0x28] -> Wmt6
-      | [0x10; 0x45] -> Wmt10
-      | _ -> Other
-
-    let eventFromControlBoxPacket sender (packet: string) =
-      let packet = packet.Split ":"
-      match packet.Length with
-      | 17 -> 
-          let rssi = packet |> Array.last |> int
-          let packet = packet.[.. packet.Length-2] |> Array.toList |> List.map ((sprintf "0x%s") >> int)
-          match (packet.[0..1]) with
-          | FanspeedPacket -> 
-            let id = packet.[2..3]
-            let house = match id with
-                        | Wmt6 -> Some "wmt6"
-                        | Wmt10 -> Some "wmt10"
-                        | _ -> None
-            let fanspeed = packet.[9] / 2
-            {
-              sender = sender
-              id = id
-              house = house
-              rssi = rssi
-              fanspeed = fanspeed
-              unknown = packet.[13]
-            } |> EventStore.addEvent
-            // printf "fanspeed address = %A house = %A speed = %A\n" id house fanspeed
-            match house with
-            | Some house -> Domain.HouseAggregate.createIthoFanSpeedEvent house (fanspeed.ToString())
-            | _ -> ()
-
-        | _ -> sprintf "unexpected packet length %d (p = %A)" packet.Length packet |> Information
-
 
 module ButtonService =         
     type IthoButton = {
@@ -263,11 +278,10 @@ module ButtonService =
         | "wmt40" -> wmt40Buttons
         | _  -> failwith "no buttons defined"
 
-
 module MqttService =
-  let msgReceived (mqttEvent:MqttMsgPublishEventArgs) =
+    let msgReceived (mqttEvent:MqttMsgPublishEventArgs) =
       let message = Encoding.ASCII.GetString mqttEvent.Message
-      sprintf "mqtt: received %s -> %s" mqttEvent.Topic message |> Information
+      // sprintf "mqtt: received %s -> %s" mqttEvent.Topic message |> Information
 
       match mqttEvent.Topic with
       | ControlBox transponder -> 
